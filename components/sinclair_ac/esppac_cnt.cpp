@@ -311,6 +311,8 @@ void SinclairACCNT::send_packet()
         packet[protocol::REPORT_FAN_QUIET_BYTE] |= protocol::REPORT_FAN_QUIET_MASK;
     }
 
+    return;
+
     /* VERTICAL SWING --------------------------------------------------------------------------- */
     uint8_t mode_vertical_swing = protocol::REPORT_VSWING_OFF;
     if (this->vertical_swing_state_ == vertical_swing_options::OFF)
@@ -366,8 +368,6 @@ void SinclairACCNT::send_packet()
         mode_vertical_swing = protocol::REPORT_VSWING_OFF;
     }
     packet[protocol::REPORT_VSWING_BYTE] |= (mode_vertical_swing << protocol::REPORT_VSWING_POS);
-
-    return;
 
     /* HORIZONTAL SWING --------------------------------------------------------------------------- */
     uint8_t mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
