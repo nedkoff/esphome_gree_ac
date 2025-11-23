@@ -16,7 +16,6 @@ void SinclairACCNT::setup()
 
 void SinclairACCNT::loop()
 {
-    return;
     /* this reads data from UART */
     SinclairAC::loop();
 
@@ -50,6 +49,8 @@ void SinclairACCNT::loop()
             handle_packet(); /* this will update state of components in HA as well as internal settings */
         }
     }
+
+    return;
 
     /* we will send a packet to the AC as a reponse to indicate changes */
     send_packet();
