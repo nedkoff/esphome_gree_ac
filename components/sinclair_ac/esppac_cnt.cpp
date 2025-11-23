@@ -53,8 +53,6 @@ void SinclairACCNT::loop()
     /* we will send a packet to the AC as a reponse to indicate changes */
     send_packet();
 
-    return;
-
     /* if there are no packets for 5 seconds - mark module as not ready */
     if (millis() - this->last_packet_received_ >= protocol::TIME_TIMEOUT_INACTIVE_MS)
     {
@@ -235,6 +233,8 @@ void SinclairACCNT::send_packet()
     uint8_t fanSpeed2 = 0;
     bool    fanQuiet  = false;
     bool    fanTurbo  = false;
+
+    return;
 
     const char* custom_fan_mode = this->get_custom_fan_mode();
 
