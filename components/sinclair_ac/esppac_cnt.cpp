@@ -367,8 +367,6 @@ void SinclairACCNT::send_packet()
     }
     packet[protocol::REPORT_VSWING_BYTE] |= (mode_vertical_swing << protocol::REPORT_VSWING_POS);
 
-    return;
-
     /* HORIZONTAL SWING --------------------------------------------------------------------------- */
     uint8_t mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
     if (this->horizontal_swing_state_ == horizontal_swing_options::OFF)
