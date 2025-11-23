@@ -73,14 +73,14 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
     if (this->state_ != ACState::Ready)
         return;
 
-    if (call.get_mode().has_value())
+    if (call.has_mode())
     {
         ESP_LOGV(TAG, "Requested mode change");
         this->update_ = ACUpdate::UpdateStart;
         this->mode = *call.get_mode();
     }
 
-    if (call.get_target_temperature().has_value())
+    if (call.has_target_temperature())
     {
         ESP_LOGV(TAG, "Requested target teperature change");
         this->update_ = ACUpdate::UpdateStart;
@@ -95,14 +95,14 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
         }
     }
 
-    if (call.get_custom_fan_mode().has_value())
+    if (call.has_custom_fan_mode())
     {
         ESP_LOGV(TAG, "Requested fan mode change");
         this->update_ = ACUpdate::UpdateStart;
-        this->custom_fan_mode = *call.get_custom_fan_mode();
+        this->set_custom_fan_mode_ (*call.get_custom_fan_mode());
     }
 
-    if (call.get_swing_mode().has_value())
+    if (call.has_swing_mode())
     {
         ESP_LOGV(TAG, "Requested swing mode change");
         this->update_ = ACUpdate::UpdateStart;
@@ -234,56 +234,58 @@ void SinclairACCNT::send_packet()
     bool    fanQuiet  = false;
     bool    fanTurbo  = false;
 
-    if (this->custom_fan_mode == fan_modes::FAN_AUTO)
+    const char* custom_fan_mode = this.get_custom_fan_mode();
+
+    if (strcmp(custom_fan_mode, fan_modes::FAN_AUTO) == 0)
     {
         fanSpeed1 = 0;
         fanSpeed2 = 0;
         fanQuiet  = false;
         fanTurbo  = false;
     }
-    else if (this->custom_fan_mode == fan_modes::FAN_LOW)
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_LOW) == 0)
     {
         fanSpeed1 = 1;
         fanSpeed2 = 1;
         fanQuiet  = false;
         fanTurbo  = false;
     }
-    else if (this->custom_fan_mode == fan_modes::FAN_QUIET)
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_QUIET) == 0)
     {
         fanSpeed1 = 1;
         fanSpeed2 = 1;
         fanQuiet  = true;
         fanTurbo  = false;
     }
-    else if (this->custom_fan_mode == fan_modes::FAN_MEDL)
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_MEDL) == 0)
     {
         fanSpeed1 = 2;
         fanSpeed2 = 2;
         fanQuiet  = false;
         fanTurbo  = false;
     }
-    else if (this->custom_fan_mode == fan_modes::FAN_MED)
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_MED) == 0)
     {
         fanSpeed1 = 3;
         fanSpeed2 = 2;
         fanQuiet  = false;
         fanTurbo  = false;
     }
-    else if (this->custom_fan_mode == fan_modes::FAN_MEDH)
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_MEDH) == 0)
     {
         fanSpeed1 = 4;
         fanSpeed2 = 3;
         fanQuiet  = false;
         fanTurbo  = false;
     }
-    else if (this->custom_fan_mode == fan_modes::FAN_HIGH)
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_HIGH) == 0)
     {
         fanSpeed1 = 5;
         fanSpeed2 = 3;
         fanQuiet  = false;
         fanTurbo  = false;
     }
-    else if (this->custom_fan_mode == fan_modes::FAN_TURBO)
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_TURBO) == 0)
     {
         fanSpeed1 = 5;
         fanSpeed2 = 3;
