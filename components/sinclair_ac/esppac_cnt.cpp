@@ -610,9 +610,9 @@ bool SinclairACCNT::processUnitReport()
     if (this->mode != newMode) hasChanged = true;
     this->mode = newMode;
 
-    std::string newFanMode = determine_fan_mode();
-    if (this->custom_fan_mode != newFanMode) hasChanged = true;
-    this->custom_fan_mode = newFanMode;
+    const char* newFanMode = determine_fan_mode();
+    if (strcmp(this->get_custom_fan_mode(), newFanMode) != 0) hasChanged = true;
+    this->set_custom_fan_mode_(newFanMode);
     
     float newTargetTemperature = (float)(((this->serialProcess_.data[protocol::REPORT_TEMP_SET_BYTE] & protocol::REPORT_TEMP_SET_MASK) >> protocol::REPORT_TEMP_SET_POS)
         + protocol::REPORT_TEMP_SET_OFF);
@@ -704,7 +704,7 @@ climate::ClimateMode SinclairACCNT::determine_mode()
     }
 }
 
-std::string SinclairACCNT::determine_fan_mode()
+const char* SinclairACCNT::determine_fan_mode()
 {
     /* fan setting has quite complex representation in the packet, brace for it */
     uint8_t fanSpeed1 = (this->serialProcess_.data[protocol::REPORT_FAN_SPD1_BYTE]  & protocol::REPORT_FAN_SPD1_MASK) >> protocol::REPORT_FAN_SPD1_POS;
