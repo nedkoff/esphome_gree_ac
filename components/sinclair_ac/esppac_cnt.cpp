@@ -315,226 +315,226 @@ void SinclairACCNT::send_packet()
         packet[protocol::REPORT_FAN_QUIET_BYTE] |= protocol::REPORT_FAN_QUIET_MASK;
     }
 
-    // /* VERTICAL SWING --------------------------------------------------------------------------- */
-    // uint8_t mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-    // if (this->vertical_swing_state_ == vertical_swing_options::OFF)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::FULL)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_FULL;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::DOWN)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_DOWN;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::MIDD)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_MIDD;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::MID)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_MID;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::MIDU)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_MIDU;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::UP)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_UP;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::CDOWN)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_CDOWN;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::CMIDD)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_CMIDD;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::CMID)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_CMID;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::CMIDU)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_CMIDU;
-    // }
-    // else if (this->vertical_swing_state_ == vertical_swing_options::CUP)
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_CUP;
-    // }
-    // else
-    // {
-    //     mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-    // }
-    // packet[protocol::REPORT_VSWING_BYTE] |= (mode_vertical_swing << protocol::REPORT_VSWING_POS);
+    /* VERTICAL SWING --------------------------------------------------------------------------- */
+    uint8_t mode_vertical_swing = protocol::REPORT_VSWING_OFF;
+    if (this->vertical_swing_state_ == vertical_swing_options::OFF)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_OFF;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::FULL)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_FULL;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::DOWN)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_DOWN;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::MIDD)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_MIDD;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::MID)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_MID;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::MIDU)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_MIDU;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::UP)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_UP;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::CDOWN)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_CDOWN;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::CMIDD)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_CMIDD;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::CMID)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_CMID;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::CMIDU)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_CMIDU;
+    }
+    else if (this->vertical_swing_state_ == vertical_swing_options::CUP)
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_CUP;
+    }
+    else
+    {
+        mode_vertical_swing = protocol::REPORT_VSWING_OFF;
+    }
+    packet[protocol::REPORT_VSWING_BYTE] |= (mode_vertical_swing << protocol::REPORT_VSWING_POS);
 
-    // /* HORIZONTAL SWING --------------------------------------------------------------------------- */
-    // uint8_t mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
-    // if (this->horizontal_swing_state_ == horizontal_swing_options::OFF)
-    // {
-    //     mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
-    // }
-    // else if (this->horizontal_swing_state_ == horizontal_swing_options::FULL)
-    // {
-    //     mode_horizontal_swing = protocol::REPORT_HSWING_FULL;
-    // }
-    // else if (this->horizontal_swing_state_ == horizontal_swing_options::CLEFT)
-    // {
-    //     mode_horizontal_swing = protocol::REPORT_HSWING_CLEFT;
-    // }
-    // else if (this->horizontal_swing_state_ == horizontal_swing_options::CMIDL)
-    // {
-    //     mode_horizontal_swing = protocol::REPORT_HSWING_CMIDL;
-    // }
-    // else if (this->horizontal_swing_state_ == horizontal_swing_options::CMID)
-    // {
-    //     mode_horizontal_swing = protocol::REPORT_HSWING_CMID;
-    // }
-    // else if (this->horizontal_swing_state_ == horizontal_swing_options::CMIDR)
-    // {
-    //     mode_horizontal_swing = protocol::REPORT_HSWING_CMIDR;
-    // }
-    // else if (this->horizontal_swing_state_ == horizontal_swing_options::CRIGHT)
-    // {
-    //     mode_horizontal_swing = protocol::REPORT_HSWING_CRIGHT;
-    // }
-    // else
-    // {
-    //     mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
-    // }
-    // packet[protocol::REPORT_HSWING_BYTE] |= (mode_horizontal_swing << protocol::REPORT_HSWING_POS);
+    /* HORIZONTAL SWING --------------------------------------------------------------------------- */
+    uint8_t mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
+    if (this->horizontal_swing_state_ == horizontal_swing_options::OFF)
+    {
+        mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
+    }
+    else if (this->horizontal_swing_state_ == horizontal_swing_options::FULL)
+    {
+        mode_horizontal_swing = protocol::REPORT_HSWING_FULL;
+    }
+    else if (this->horizontal_swing_state_ == horizontal_swing_options::CLEFT)
+    {
+        mode_horizontal_swing = protocol::REPORT_HSWING_CLEFT;
+    }
+    else if (this->horizontal_swing_state_ == horizontal_swing_options::CMIDL)
+    {
+        mode_horizontal_swing = protocol::REPORT_HSWING_CMIDL;
+    }
+    else if (this->horizontal_swing_state_ == horizontal_swing_options::CMID)
+    {
+        mode_horizontal_swing = protocol::REPORT_HSWING_CMID;
+    }
+    else if (this->horizontal_swing_state_ == horizontal_swing_options::CMIDR)
+    {
+        mode_horizontal_swing = protocol::REPORT_HSWING_CMIDR;
+    }
+    else if (this->horizontal_swing_state_ == horizontal_swing_options::CRIGHT)
+    {
+        mode_horizontal_swing = protocol::REPORT_HSWING_CRIGHT;
+    }
+    else
+    {
+        mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
+    }
+    packet[protocol::REPORT_HSWING_BYTE] |= (mode_horizontal_swing << protocol::REPORT_HSWING_POS);
 
-    // /* DISPLAY --------------------------------------------------------------------------- */
-    // uint8_t display_mode = protocol::REPORT_DISP_MODE_AUTO;
-    // if (this->display_state_ == display_options::AUTO)
-    // {
-    //     display_mode = protocol::REPORT_DISP_MODE_AUTO;
-    //     this->display_power_internal_ = true;
-    // }
-    // else if (this->display_state_ == display_options::SET)
-    // {
-    //     display_mode = protocol::REPORT_DISP_MODE_SET;
-    //     this->display_power_internal_ = true;
-    // }
-    // else if (this->display_state_ == display_options::ACT)
-    // {
-    //     display_mode = protocol::REPORT_DISP_MODE_ACT;
-    //     this->display_power_internal_ = true;
-    // }
-    // else if (this->display_state_ == display_options::OUT)
-    // {
-    //     display_mode = protocol::REPORT_DISP_MODE_OUT;
-    //     this->display_power_internal_ = true;
-    // }
-    // else if (this->display_state_ == display_options::OFF)
-    // {
-    //     /* we do not want to alter display setting - only turn it off */
-    //     this->display_power_internal_ = false;
-    //     if (this->display_mode_internal_ == display_options::AUTO)
-    //     {
-    //         display_mode = protocol::REPORT_DISP_MODE_AUTO;
-    //     }
-    //     else if (this->display_mode_internal_ == display_options::SET)
-    //     {
-    //         display_mode = protocol::REPORT_DISP_MODE_SET;
-    //     }
-    //     else if (this->display_mode_internal_ == display_options::ACT)
-    //     {
-    //         display_mode = protocol::REPORT_DISP_MODE_ACT;
-    //     }
-    //     else if (this->display_mode_internal_ == display_options::OUT)
-    //     {
-    //         display_mode = protocol::REPORT_DISP_MODE_OUT;
-    //     }
-    //     else
-    //     {
-    //         display_mode = protocol::REPORT_DISP_MODE_AUTO;
-    //     }
-    // }
-    // else
-    // {
-    //     display_mode = protocol::REPORT_DISP_MODE_AUTO;
-    //     this->display_power_internal_ = true;
-    // }
+    /* DISPLAY --------------------------------------------------------------------------- */
+    uint8_t display_mode = protocol::REPORT_DISP_MODE_AUTO;
+    if (this->display_state_ == display_options::AUTO)
+    {
+        display_mode = protocol::REPORT_DISP_MODE_AUTO;
+        this->display_power_internal_ = true;
+    }
+    else if (this->display_state_ == display_options::SET)
+    {
+        display_mode = protocol::REPORT_DISP_MODE_SET;
+        this->display_power_internal_ = true;
+    }
+    else if (this->display_state_ == display_options::ACT)
+    {
+        display_mode = protocol::REPORT_DISP_MODE_ACT;
+        this->display_power_internal_ = true;
+    }
+    else if (this->display_state_ == display_options::OUT)
+    {
+        display_mode = protocol::REPORT_DISP_MODE_OUT;
+        this->display_power_internal_ = true;
+    }
+    else if (this->display_state_ == display_options::OFF)
+    {
+        /* we do not want to alter display setting - only turn it off */
+        this->display_power_internal_ = false;
+        if (this->display_mode_internal_ == display_options::AUTO)
+        {
+            display_mode = protocol::REPORT_DISP_MODE_AUTO;
+        }
+        else if (this->display_mode_internal_ == display_options::SET)
+        {
+            display_mode = protocol::REPORT_DISP_MODE_SET;
+        }
+        else if (this->display_mode_internal_ == display_options::ACT)
+        {
+            display_mode = protocol::REPORT_DISP_MODE_ACT;
+        }
+        else if (this->display_mode_internal_ == display_options::OUT)
+        {
+            display_mode = protocol::REPORT_DISP_MODE_OUT;
+        }
+        else
+        {
+            display_mode = protocol::REPORT_DISP_MODE_AUTO;
+        }
+    }
+    else
+    {
+        display_mode = protocol::REPORT_DISP_MODE_AUTO;
+        this->display_power_internal_ = true;
+    }
 
-    // packet[protocol::REPORT_DISP_MODE_BYTE] |= (display_mode << protocol::REPORT_DISP_MODE_POS);
+    packet[protocol::REPORT_DISP_MODE_BYTE] |= (display_mode << protocol::REPORT_DISP_MODE_POS);
 
-    // if (this->display_power_internal_)
-    // {
-    //     packet[protocol::REPORT_DISP_ON_BYTE] |= protocol::REPORT_DISP_ON_MASK;
-    // }
+    if (this->display_power_internal_)
+    {
+        packet[protocol::REPORT_DISP_ON_BYTE] |= protocol::REPORT_DISP_ON_MASK;
+    }
 
-    // /* DISPLAY UNIT --------------------------------------------------------------------------- */
-    // if (this->display_unit_state_ == display_unit_options::DEGF)
-    // {
-    //     packet[protocol::REPORT_DISP_F_BYTE] |= protocol::REPORT_DISP_F_MASK;
-    // }
+    /* DISPLAY UNIT --------------------------------------------------------------------------- */
+    if (this->display_unit_state_ == display_unit_options::DEGF)
+    {
+        packet[protocol::REPORT_DISP_F_BYTE] |= protocol::REPORT_DISP_F_MASK;
+    }
 
-    // /* PLASMA --------------------------------------------------------------------------- */
-    // if (this->plasma_state_)
-    // {
-    //     packet[protocol::REPORT_PLASMA1_BYTE] |= protocol::REPORT_PLASMA1_MASK;
-    //     packet[protocol::REPORT_PLASMA2_BYTE] |= protocol::REPORT_PLASMA2_MASK;
-    // }
+    /* PLASMA --------------------------------------------------------------------------- */
+    if (this->plasma_state_)
+    {
+        packet[protocol::REPORT_PLASMA1_BYTE] |= protocol::REPORT_PLASMA1_MASK;
+        packet[protocol::REPORT_PLASMA2_BYTE] |= protocol::REPORT_PLASMA2_MASK;
+    }
 
-    // /* SLEEP --------------------------------------------------------------------------- */
-    // if (this->sleep_state_)
-    // {
-    //     packet[protocol::REPORT_SLEEP_BYTE] |= protocol::REPORT_SLEEP_MASK;
-    // }
+    /* SLEEP --------------------------------------------------------------------------- */
+    if (this->sleep_state_)
+    {
+        packet[protocol::REPORT_SLEEP_BYTE] |= protocol::REPORT_SLEEP_MASK;
+    }
 
-    // /* XFAN --------------------------------------------------------------------------- */
-    // if (this->xfan_state_)
-    // {
-    //     packet[protocol::REPORT_XFAN_BYTE] |= protocol::REPORT_XFAN_MASK;
-    // }
+    /* XFAN --------------------------------------------------------------------------- */
+    if (this->xfan_state_)
+    {
+        packet[protocol::REPORT_XFAN_BYTE] |= protocol::REPORT_XFAN_MASK;
+    }
 
-    // /* SAVE --------------------------------------------------------------------------- */
-    // if (this->save_state_)
-    // {
-    //     packet[protocol::REPORT_SAVE_BYTE] |= protocol::REPORT_SAVE_MASK;
-    // }
+    /* SAVE --------------------------------------------------------------------------- */
+    if (this->save_state_)
+    {
+        packet[protocol::REPORT_SAVE_BYTE] |= protocol::REPORT_SAVE_MASK;
+    }
     
-    // /* Do the command, length */
-    // packet.insert(packet.begin(), protocol::CMD_OUT_PARAMS_SET);
-    // packet.insert(packet.begin(), protocol::SET_PACKET_LEN + 2); /* Add 2 bytes as we added a command and will add checksum */
+    /* Do the command, length */
+    packet.insert(packet.begin(), protocol::CMD_OUT_PARAMS_SET);
+    packet.insert(packet.begin(), protocol::SET_PACKET_LEN + 2); /* Add 2 bytes as we added a command and will add checksum */
 
-    // /* Do checksum - sum of all bytes except sync and checksum itself% 0x100 
-    //    the module would be realized by the fact that we are using uint8_t*/
-    // uint8_t checksum = 0;
-    // for (uint8_t i = 0 ; i < packet.size() ; i++)
-    // {
-    //     checksum += packet[i];
-    // }
-    // packet.push_back(checksum);
+    /* Do checksum - sum of all bytes except sync and checksum itself% 0x100 
+       the module would be realized by the fact that we are using uint8_t*/
+    uint8_t checksum = 0;
+    for (uint8_t i = 0 ; i < packet.size() ; i++)
+    {
+        checksum += packet[i];
+    }
+    packet.push_back(checksum);
 
-    // /* Do SYNC bytes */
-    // packet.insert(packet.begin(), protocol::SYNC);
-    // packet.insert(packet.begin(), protocol::SYNC);
+    /* Do SYNC bytes */
+    packet.insert(packet.begin(), protocol::SYNC);
+    packet.insert(packet.begin(), protocol::SYNC);
 
-    // this->last_packet_sent_ = millis();  /* Save the time when we sent the last packet */
-    // this->wait_response_ = true;
-    // write_array(packet);                 /* Sent the packet by UART */
-    // log_packet(packet, true);            /* Log uart for debug purposes */
+    this->last_packet_sent_ = millis();  /* Save the time when we sent the last packet */
+    this->wait_response_ = true;
+    write_array(packet);                 /* Sent the packet by UART */
+    log_packet(packet, true);            /* Log uart for debug purposes */
 
-    // /* update setting state-machine */
-    // switch(this->update_)
-    // {
-    //     case ACUpdate::NoUpdate:
-    //         break;
-    //     case ACUpdate::UpdateStart:
-    //         this->update_ = ACUpdate::UpdateClear;
-    //         break;
-    //     case ACUpdate::UpdateClear:
-    //         this->update_ = ACUpdate::NoUpdate;
-    //         break;
-    //     default:
-    //         this->update_ = ACUpdate::NoUpdate;
-    //         break;
-    // }
+    /* update setting state-machine */
+    switch(this->update_)
+    {
+        case ACUpdate::NoUpdate:
+            break;
+        case ACUpdate::UpdateStart:
+            this->update_ = ACUpdate::UpdateClear;
+            break;
+        case ACUpdate::UpdateClear:
+            this->update_ = ACUpdate::NoUpdate;
+            break;
+        default:
+            this->update_ = ACUpdate::NoUpdate;
+            break;
+    }
 }
 
 /*
