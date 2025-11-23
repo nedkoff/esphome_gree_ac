@@ -12,6 +12,8 @@ void SinclairACCNT::setup()
     SinclairAC::setup();
 
     ESP_LOGD(TAG, "Using serial protocol for Sinclair AC");
+
+    delay(10000);
 }
 
 void SinclairACCNT::loop()
