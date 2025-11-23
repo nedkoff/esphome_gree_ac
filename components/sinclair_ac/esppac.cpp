@@ -36,7 +36,7 @@ void SinclairAC::setup()
     this->init_time_ = millis();
     this->last_packet_sent_ = millis();
 
-    ESP_LOGI(TAG, "Sinclair AC component v%s starting...", VERSION);
+    //ESP_LOGI(TAG, "Sinclair AC component v%s starting...", VERSION);
 }
 
 void SinclairAC::loop()
@@ -113,7 +113,7 @@ void SinclairAC::read_data()
 void SinclairAC::update_current_temperature(float temperature)
 {
     if (temperature > TEMPERATURE_THRESHOLD) {
-        ESP_LOGW(TAG, "Received out of range inside temperature: %f", temperature);
+        //ESP_LOGW(TAG, "Received out of range inside temperature: %f", temperature);
         return;
     }
 
@@ -123,7 +123,7 @@ void SinclairAC::update_current_temperature(float temperature)
 void SinclairAC::update_target_temperature(float temperature)
 {
     if (temperature > TEMPERATURE_THRESHOLD) {
-        ESP_LOGW(TAG, "Received out of range target temperature %.2f", temperature);
+        //ESP_LOGW(TAG, "Received out of range target temperature %.2f", temperature);
         return;
     }
 
@@ -334,9 +334,9 @@ void SinclairAC::set_save_switch(switch_::Switch *save_switch)
 void SinclairAC::log_packet(std::vector<uint8_t> data, bool outgoing)
 {
     if (outgoing) {
-        ESP_LOGV(TAG, "TX: %s", format_hex_pretty(data).c_str());
+        //ESP_LOGV(TAG, "TX: %s", format_hex_pretty(data).c_str());
     } else {
-        ESP_LOGV(TAG, "RX: %s", format_hex_pretty(data).c_str());
+        //ESP_LOGV(TAG, "RX: %s", format_hex_pretty(data).c_str());
     }
 }
 

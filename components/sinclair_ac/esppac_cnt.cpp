@@ -11,9 +11,7 @@ void SinclairACCNT::setup()
 {
     SinclairAC::setup();
 
-    ESP_LOGD(TAG, "Using serial protocol for Sinclair AC");
-
-    delay(10000);
+    //ESP_LOGD(TAG, "Using serial protocol for Sinclair AC");
 }
 
 void SinclairACCNT::loop()
@@ -77,14 +75,14 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
 
     if (call.get_mode().has_value())
     {
-        ESP_LOGV(TAG, "Requested mode change");
+        //ESP_LOGV(TAG, "Requested mode change");
         this->update_ = ACUpdate::UpdateStart;
         this->mode = *call.get_mode();
     }
 
     if (call.get_target_temperature().has_value())
     {
-        ESP_LOGV(TAG, "Requested target teperature change");
+        //ESP_LOGV(TAG, "Requested target teperature change");
         this->update_ = ACUpdate::UpdateStart;
         this->target_temperature = *call.get_target_temperature();
         if (this->target_temperature < MIN_TEMPERATURE)
@@ -99,14 +97,14 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
 
     if (call.has_custom_fan_mode())
     {
-        ESP_LOGV(TAG, "Requested fan mode change");
+        //ESP_LOGV(TAG, "Requested fan mode change");
         this->update_ = ACUpdate::UpdateStart;
         this->set_custom_fan_mode_(call.get_custom_fan_mode());
     }
 
     if (call.get_swing_mode().has_value())
     {
-        ESP_LOGV(TAG, "Requested swing mode change");
+        //ESP_LOGV(TAG, "Requested swing mode change");
         this->update_ = ACUpdate::UpdateStart;
         switch (*call.get_swing_mode()) {
             case climate::CLIMATE_SWING_BOTH:
@@ -129,7 +127,7 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
                 this->horizontal_swing_state_ = horizontal_swing_options::FULL;
                 break;
             default:
-                ESP_LOGV(TAG, "Unsupported swing mode requested");
+                //ESP_LOGV(TAG, "Unsupported swing mode requested");
                 /* both center */
                 this->vertical_swing_state_   =   vertical_swing_options::CMID;
                 this->horizontal_swing_state_ = horizontal_swing_options::CMID;
@@ -544,7 +542,7 @@ bool SinclairACCNT::verify_packet()
     /* At least 2 sync bytes + length + type + checksum */
     if (this->serialProcess_.data.size() < 5)
     {
-        ESP_LOGW(TAG, "Dropping invalid packet (length)");
+        //ESP_LOGW(TAG, "Dropping invalid packet (length)");
         return false;
     }
 
@@ -564,7 +562,7 @@ bool SinclairACCNT::verify_packet()
     }
     if (!commandAllowed)
     {
-        ESP_LOGW(TAG, "Dropping invalid packet (command [%02X] not allowed)", this->serialProcess_.data[3]);
+        //ESP_LOGW(TAG, "Dropping invalid packet (command [%02X] not allowed)", this->serialProcess_.data[3]);
         return false;
     }
 
@@ -577,7 +575,7 @@ bool SinclairACCNT::verify_packet()
     }
     if (checksum != this->serialProcess_.data[this->serialProcess_.data.size()-1])
     {
-        ESP_LOGD(TAG, "Dropping invalid packet (checksum)");
+        //ESP_LOGD(TAG, "Dropping invalid packet (checksum)");
         return false;
     }
 
@@ -597,7 +595,7 @@ void SinclairACCNT::handle_packet()
     }
     else 
     {
-        ESP_LOGD(TAG, "Received unknown packet");
+        //ESP_LOGD(TAG, "Received unknown packet");
     }
 }
 
@@ -690,7 +688,7 @@ climate::ClimateMode SinclairACCNT::determine_mode()
             this->mode_internal_ = climate::CLIMATE_MODE_HEAT;
             break;
         default:
-            ESP_LOGW(TAG, "Received unknown climate mode");
+            //ESP_LOGW(TAG, "Received unknown climate mode");
             this->mode_internal_ = climate::CLIMATE_MODE_OFF;
             break;
     }
@@ -748,7 +746,7 @@ const char* SinclairACCNT::determine_fan_mode()
     }
     else 
     {
-        ESP_LOGW(TAG, "Received unknown fan mode");
+        //ESP_LOGW(TAG, "Received unknown fan mode");
         return fan_modes::FAN_AUTO;
     }
 }
@@ -783,7 +781,7 @@ std::string SinclairACCNT::determine_vertical_swing()
         case protocol::REPORT_VSWING_CUP:
             return vertical_swing_options::CUP;
         default:
-            ESP_LOGW(TAG, "Received unknown vertical swing mode");
+            //ESP_LOGW(TAG, "Received unknown vertical swing mode");
             return vertical_swing_options::OFF;;
     }
 }
@@ -808,7 +806,7 @@ std::string SinclairACCNT::determine_horizontal_swing()
         case protocol::REPORT_HSWING_CRIGHT:
             return horizontal_swing_options::CRIGHT;
         default:
-            ESP_LOGW(TAG, "Received unknown horizontal swing mode");
+            //ESP_LOGW(TAG, "Received unknown horizontal swing mode");
             return horizontal_swing_options::OFF;
     }
 }
@@ -833,7 +831,7 @@ std::string SinclairACCNT::determine_display()
             this->display_mode_internal_ = display_options::OUT;
             break;
         default:
-            ESP_LOGW(TAG, "Received unknown display mode");
+            //ESP_LOGW(TAG, "Received unknown display mode");
             this->display_mode_internal_ = display_options::AUTO;
             break;
     }
@@ -888,7 +886,7 @@ void SinclairACCNT::on_vertical_swing_change(const std::string &swing)
     if (this->state_ != ACState::Ready)
         return;
 
-    ESP_LOGD(TAG, "Setting vertical swing position");
+    //ESP_LOGD(TAG, "Setting vertical swing position");
 
     this->update_ = ACUpdate::UpdateStart;
     this->vertical_swing_state_ = swing;
@@ -899,7 +897,7 @@ void SinclairACCNT::on_horizontal_swing_change(const std::string &swing)
     if (this->state_ != ACState::Ready)
         return;
 
-    ESP_LOGD(TAG, "Setting horizontal swing position");
+    //ESP_LOGD(TAG, "Setting horizontal swing position");
 
     this->update_ = ACUpdate::UpdateStart;
     this->horizontal_swing_state_ = swing;
@@ -910,7 +908,7 @@ void SinclairACCNT::on_display_change(const std::string &display)
     if (this->state_ != ACState::Ready)
         return;
 
-    ESP_LOGD(TAG, "Setting display mode");
+    //ESP_LOGD(TAG, "Setting display mode");
 
     this->update_ = ACUpdate::UpdateStart;
     this->display_state_ = display;
@@ -921,7 +919,7 @@ void SinclairACCNT::on_display_unit_change(const std::string &display_unit)
     if (this->state_ != ACState::Ready)
         return;
 
-    ESP_LOGD(TAG, "Setting display unit");
+    //ESP_LOGD(TAG, "Setting display unit");
 
     this->update_ = ACUpdate::UpdateStart;
     this->display_unit_state_ = display_unit;
@@ -932,7 +930,7 @@ void SinclairACCNT::on_plasma_change(bool plasma)
     if (this->state_ != ACState::Ready)
         return;
 
-    ESP_LOGD(TAG, "Setting plasma");
+    //ESP_LOGD(TAG, "Setting plasma");
 
     this->update_ = ACUpdate::UpdateStart;
     this->plasma_state_ = plasma;
@@ -943,7 +941,7 @@ void SinclairACCNT::on_sleep_change(bool sleep)
     if (this->state_ != ACState::Ready)
         return;
 
-    ESP_LOGD(TAG, "Setting sleep");
+    //ESP_LOGD(TAG, "Setting sleep");
 
     this->update_ = ACUpdate::UpdateStart;
     this->sleep_state_ = sleep;
@@ -954,7 +952,7 @@ void SinclairACCNT::on_xfan_change(bool xfan)
     if (this->state_ != ACState::Ready)
         return;
 
-    ESP_LOGD(TAG, "Setting xfan");
+    //ESP_LOGD(TAG, "Setting xfan");
 
     this->update_ = ACUpdate::UpdateStart;
     this->xfan_state_ = xfan;
@@ -965,7 +963,7 @@ void SinclairACCNT::on_save_change(bool save)
     if (this->state_ != ACState::Ready)
         return;
 
-    ESP_LOGD(TAG, "Setting save");
+    //ESP_LOGD(TAG, "Setting save");
 
     this->update_ = ACUpdate::UpdateStart;
     this->save_state_ = save;
