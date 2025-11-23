@@ -73,14 +73,14 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
     if (this->state_ != ACState::Ready)
         return;
 
-    if (call.has_mode())
+    if (call.get_mode().has_value())
     {
         ESP_LOGV(TAG, "Requested mode change");
         this->update_ = ACUpdate::UpdateStart;
         this->mode = *call.get_mode();
     }
 
-    if (call.has_target_temperature())
+    if (call.get_target_temperature().has_value())
     {
         ESP_LOGV(TAG, "Requested target teperature change");
         this->update_ = ACUpdate::UpdateStart;
@@ -99,10 +99,10 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
     {
         ESP_LOGV(TAG, "Requested fan mode change");
         this->update_ = ACUpdate::UpdateStart;
-        this->set_custom_fan_mode_ (*call.get_custom_fan_mode());
+        this->set_custom_fan_mode_(call.get_custom_fan_mode());
     }
 
-    if (call.has_swing_mode())
+    if (call.get_swing_mode().has_value())
     {
         ESP_LOGV(TAG, "Requested swing mode change");
         this->update_ = ACUpdate::UpdateStart;
@@ -234,7 +234,7 @@ void SinclairACCNT::send_packet()
     bool    fanQuiet  = false;
     bool    fanTurbo  = false;
 
-    const char* custom_fan_mode = this.get_custom_fan_mode();
+    const char* custom_fan_mode = this->get_custom_fan_mode();
 
     if (strcmp(custom_fan_mode, fan_modes::FAN_AUTO) == 0)
     {
