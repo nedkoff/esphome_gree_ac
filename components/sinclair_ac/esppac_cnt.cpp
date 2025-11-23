@@ -302,6 +302,8 @@ void SinclairACCNT::send_packet()
 
     ESP_LOGV(TAG, "TXsize: %u", packet.size());
 
+    delay(10000);
+
     packet[protocol::REPORT_FAN_SPD1_BYTE] |= (fanSpeed1 << protocol::REPORT_FAN_SPD1_POS);
     packet[protocol::REPORT_FAN_SPD2_BYTE] |= (fanSpeed2 << protocol::REPORT_FAN_SPD2_POS);
     if (fanTurbo)
