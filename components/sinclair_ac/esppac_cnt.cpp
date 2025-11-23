@@ -300,6 +300,8 @@ void SinclairACCNT::send_packet()
         fanTurbo  = false;
     }
 
+    return;
+
     packet[protocol::REPORT_FAN_SPD1_BYTE] |= (fanSpeed1 << protocol::REPORT_FAN_SPD1_POS);
     packet[protocol::REPORT_FAN_SPD2_BYTE] |= (fanSpeed2 << protocol::REPORT_FAN_SPD2_POS);
     if (fanTurbo)
@@ -310,8 +312,6 @@ void SinclairACCNT::send_packet()
     {
         packet[protocol::REPORT_FAN_QUIET_BYTE] |= protocol::REPORT_FAN_QUIET_MASK;
     }
-
-    return;
 
     /* VERTICAL SWING --------------------------------------------------------------------------- */
     uint8_t mode_vertical_swing = protocol::REPORT_VSWING_OFF;
