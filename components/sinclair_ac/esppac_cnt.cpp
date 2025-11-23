@@ -139,9 +139,13 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
 /*
  * Send a raw packet, as is
  */
+
+static std::vector<uint8_t> packet(protocol::SET_PACKET_LEN + 10, 0);  /* Initialize packet contents */
+
 void SinclairACCNT::send_packet()
 {
-    std::vector<uint8_t> packet(protocol::SET_PACKET_LEN, 0);  /* Initialize packet contents */
+    packet.clear();
+    packet.insert(packet.begin(), protocol::SET_PACKET_LEN, 0);
 
     if (this->wait_response_ == true && (millis() - this->last_packet_sent_) < protocol::TIME_REFRESH_PERIOD_MS)
     {
@@ -299,10 +303,6 @@ void SinclairACCNT::send_packet()
         fanQuiet  = false;
         fanTurbo  = false;
     }
-
-    ESP_LOGV(TAG, "TXsize: %u", packet.size());
-
-    delay(10000);
 
     packet[protocol::REPORT_FAN_SPD1_BYTE] |= (fanSpeed1 << protocol::REPORT_FAN_SPD1_POS);
     packet[protocol::REPORT_FAN_SPD2_BYTE] |= (fanSpeed2 << protocol::REPORT_FAN_SPD2_POS);
