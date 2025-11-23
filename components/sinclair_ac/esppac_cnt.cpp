@@ -234,8 +234,6 @@ void SinclairACCNT::send_packet()
     bool    fanQuiet  = false;
     bool    fanTurbo  = false;
 
-    return;
-
     const char* custom_fan_mode = this->get_custom_fan_mode();
 
     if (strcmp(custom_fan_mode, fan_modes::FAN_AUTO) == 0)
@@ -301,6 +299,8 @@ void SinclairACCNT::send_packet()
         fanQuiet  = false;
         fanTurbo  = false;
     }
+
+    return;
 
     packet[protocol::REPORT_FAN_SPD1_BYTE] |= (fanSpeed1 << protocol::REPORT_FAN_SPD1_POS);
     packet[protocol::REPORT_FAN_SPD2_BYTE] |= (fanSpeed2 << protocol::REPORT_FAN_SPD2_POS);
