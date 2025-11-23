@@ -50,10 +50,10 @@ void SinclairACCNT::loop()
         }
     }
 
-    return;
-
     /* we will send a packet to the AC as a reponse to indicate changes */
     send_packet();
+
+    return;
 
     /* if there are no packets for 5 seconds - mark module as not ready */
     if (millis() - this->last_packet_received_ >= protocol::TIME_TIMEOUT_INACTIVE_MS)
