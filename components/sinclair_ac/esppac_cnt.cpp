@@ -147,394 +147,394 @@ void SinclairACCNT::send_packet()
     packet.clear();
     packet.insert(packet.begin(), protocol::SET_PACKET_LEN, 0);
 
-    if (this->wait_response_ == true && (millis() - this->last_packet_sent_) < protocol::TIME_REFRESH_PERIOD_MS)
-    {
-        /* do net send packet too often or when we are waiting for report to come */
-        return;
-    }
-    
-    packet[protocol::SET_CONST_02_BYTE] = protocol::SET_CONST_02_VAL; /* Some always 0x02 byte... */
-    packet[protocol::SET_CONST_BIT_BYTE] = protocol::SET_CONST_BIT_MASK; /* Some always true bit */
-
-    /* Prepare the rest of the frame */
-    /* this handles tricky part of 0xAF value and flag marking that WiFi does not apply any changes */
-    switch(this->update_)
-    {
-        default:
-        case ACUpdate::NoUpdate:
-            packet[protocol::SET_NOCHANGE_BYTE] |= protocol::SET_NOCHANGE_MASK;
-            break;
-        case ACUpdate::UpdateStart:
-            packet[protocol::SET_AF_BYTE] = protocol::SET_AF_VAL;
-            break;
-        case ACUpdate::UpdateClear:
-            break;
-    }
-
-    /* MODE and POWER --------------------------------------------------------------------------- */
-    uint8_t mode = protocol::REPORT_MODE_AUTO;
-    bool power = false;
-    switch (this->mode)
-    {
-        case climate::CLIMATE_MODE_AUTO:
-            mode = protocol::REPORT_MODE_AUTO;
-            power = true;
-            break;
-        case climate::CLIMATE_MODE_COOL:
-            mode = protocol::REPORT_MODE_COOL;
-            power = true;
-            break;
-        case climate::CLIMATE_MODE_DRY:
-            mode = protocol::REPORT_MODE_DRY;
-            power = true;
-            break;
-        case climate::CLIMATE_MODE_FAN_ONLY:
-            mode = protocol::REPORT_MODE_FAN;
-            power = true;
-            break;
-        case climate::CLIMATE_MODE_HEAT:
-            mode = protocol::REPORT_MODE_HEAT;
-            power = true;
-            break;
-        default:
-        case climate::CLIMATE_MODE_OFF:
-            /* In case of MODE_OFF we will not alter the last mode setting recieved from AC, see determine_mode() */
-            switch (this->mode_internal_)
-            {
-                case climate::CLIMATE_MODE_AUTO:
-                    mode = protocol::REPORT_MODE_AUTO;
-                    break;
-                case climate::CLIMATE_MODE_COOL:
-                    mode = protocol::REPORT_MODE_COOL;
-                    break;
-                case climate::CLIMATE_MODE_DRY:
-                    mode = protocol::REPORT_MODE_DRY;
-                    break;
-                case climate::CLIMATE_MODE_FAN_ONLY:
-                    mode = protocol::REPORT_MODE_FAN;
-                    break;
-                case climate::CLIMATE_MODE_HEAT:
-                    mode = protocol::REPORT_MODE_HEAT;
-                    break;
-            }
-            power = false;
-            break;
-    }
-
-    packet[protocol::REPORT_MODE_BYTE] |= (mode << protocol::REPORT_MODE_POS);
-    if (power)
-    {
-        packet[protocol::REPORT_PWR_BYTE] |= protocol::REPORT_PWR_MASK;
-    }
-
-    /* TARGET TEMPERATURE --------------------------------------------------------------------------- */
-    uint8_t target_temperature = ((((uint8_t)this->target_temperature) - protocol::REPORT_TEMP_SET_OFF) << protocol::REPORT_TEMP_SET_POS);
-    packet[protocol::REPORT_TEMP_SET_BYTE] |= (target_temperature & protocol::REPORT_TEMP_SET_MASK);
-
-    /* FAN SPEED --------------------------------------------------------------------------- */
-    /* below will default to AUTO */
-    uint8_t fanSpeed1 = 0;
-    uint8_t fanSpeed2 = 0;
-    bool    fanQuiet  = false;
-    bool    fanTurbo  = false;
-
-    const char* custom_fan_mode = this->get_custom_fan_mode();
-
-    if (strcmp(custom_fan_mode, fan_modes::FAN_AUTO) == 0)
-    {
-        fanSpeed1 = 0;
-        fanSpeed2 = 0;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (strcmp(custom_fan_mode, fan_modes::FAN_LOW) == 0)
-    {
-        fanSpeed1 = 1;
-        fanSpeed2 = 1;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (strcmp(custom_fan_mode, fan_modes::FAN_QUIET) == 0)
-    {
-        fanSpeed1 = 1;
-        fanSpeed2 = 1;
-        fanQuiet  = true;
-        fanTurbo  = false;
-    }
-    else if (strcmp(custom_fan_mode, fan_modes::FAN_MEDL) == 0)
-    {
-        fanSpeed1 = 2;
-        fanSpeed2 = 2;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (strcmp(custom_fan_mode, fan_modes::FAN_MED) == 0)
-    {
-        fanSpeed1 = 3;
-        fanSpeed2 = 2;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (strcmp(custom_fan_mode, fan_modes::FAN_MEDH) == 0)
-    {
-        fanSpeed1 = 4;
-        fanSpeed2 = 3;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (strcmp(custom_fan_mode, fan_modes::FAN_HIGH) == 0)
-    {
-        fanSpeed1 = 5;
-        fanSpeed2 = 3;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (strcmp(custom_fan_mode, fan_modes::FAN_TURBO) == 0)
-    {
-        fanSpeed1 = 5;
-        fanSpeed2 = 3;
-        fanQuiet  = false;
-        fanTurbo  = true;
-    }
-    else
-    {
-        fanSpeed1 = 0;
-        fanSpeed2 = 0;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-
-    // packet[protocol::REPORT_FAN_SPD1_BYTE] |= (fanSpeed1 << protocol::REPORT_FAN_SPD1_POS);
-    // packet[protocol::REPORT_FAN_SPD2_BYTE] |= (fanSpeed2 << protocol::REPORT_FAN_SPD2_POS);
-    // if (fanTurbo)
+    // if (this->wait_response_ == true && (millis() - this->last_packet_sent_) < protocol::TIME_REFRESH_PERIOD_MS)
     // {
-    //     packet[protocol::REPORT_FAN_TURBO_BYTE] |= protocol::REPORT_FAN_TURBO_MASK;
+    //     /* do net send packet too often or when we are waiting for report to come */
+    //     return;
     // }
-    // if (fanQuiet)
+    
+    // packet[protocol::SET_CONST_02_BYTE] = protocol::SET_CONST_02_VAL; /* Some always 0x02 byte... */
+    // packet[protocol::SET_CONST_BIT_BYTE] = protocol::SET_CONST_BIT_MASK; /* Some always true bit */
+
+    // /* Prepare the rest of the frame */
+    // /* this handles tricky part of 0xAF value and flag marking that WiFi does not apply any changes */
+    // switch(this->update_)
     // {
-    //     packet[protocol::REPORT_FAN_QUIET_BYTE] |= protocol::REPORT_FAN_QUIET_MASK;
+    //     default:
+    //     case ACUpdate::NoUpdate:
+    //         packet[protocol::SET_NOCHANGE_BYTE] |= protocol::SET_NOCHANGE_MASK;
+    //         break;
+    //     case ACUpdate::UpdateStart:
+    //         packet[protocol::SET_AF_BYTE] = protocol::SET_AF_VAL;
+    //         break;
+    //     case ACUpdate::UpdateClear:
+    //         break;
     // }
 
-    /* VERTICAL SWING --------------------------------------------------------------------------- */
-    uint8_t mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-    if (this->vertical_swing_state_ == vertical_swing_options::OFF)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::FULL)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_FULL;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::DOWN)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_DOWN;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::MIDD)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_MIDD;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::MID)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_MID;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::MIDU)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_MIDU;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::UP)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_UP;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::CDOWN)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_CDOWN;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::CMIDD)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_CMIDD;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::CMID)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_CMID;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::CMIDU)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_CMIDU;
-    }
-    else if (this->vertical_swing_state_ == vertical_swing_options::CUP)
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_CUP;
-    }
-    else
-    {
-        mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-    }
-    packet[protocol::REPORT_VSWING_BYTE] |= (mode_vertical_swing << protocol::REPORT_VSWING_POS);
+    // /* MODE and POWER --------------------------------------------------------------------------- */
+    // uint8_t mode = protocol::REPORT_MODE_AUTO;
+    // bool power = false;
+    // switch (this->mode)
+    // {
+    //     case climate::CLIMATE_MODE_AUTO:
+    //         mode = protocol::REPORT_MODE_AUTO;
+    //         power = true;
+    //         break;
+    //     case climate::CLIMATE_MODE_COOL:
+    //         mode = protocol::REPORT_MODE_COOL;
+    //         power = true;
+    //         break;
+    //     case climate::CLIMATE_MODE_DRY:
+    //         mode = protocol::REPORT_MODE_DRY;
+    //         power = true;
+    //         break;
+    //     case climate::CLIMATE_MODE_FAN_ONLY:
+    //         mode = protocol::REPORT_MODE_FAN;
+    //         power = true;
+    //         break;
+    //     case climate::CLIMATE_MODE_HEAT:
+    //         mode = protocol::REPORT_MODE_HEAT;
+    //         power = true;
+    //         break;
+    //     default:
+    //     case climate::CLIMATE_MODE_OFF:
+    //         /* In case of MODE_OFF we will not alter the last mode setting recieved from AC, see determine_mode() */
+    //         switch (this->mode_internal_)
+    //         {
+    //             case climate::CLIMATE_MODE_AUTO:
+    //                 mode = protocol::REPORT_MODE_AUTO;
+    //                 break;
+    //             case climate::CLIMATE_MODE_COOL:
+    //                 mode = protocol::REPORT_MODE_COOL;
+    //                 break;
+    //             case climate::CLIMATE_MODE_DRY:
+    //                 mode = protocol::REPORT_MODE_DRY;
+    //                 break;
+    //             case climate::CLIMATE_MODE_FAN_ONLY:
+    //                 mode = protocol::REPORT_MODE_FAN;
+    //                 break;
+    //             case climate::CLIMATE_MODE_HEAT:
+    //                 mode = protocol::REPORT_MODE_HEAT;
+    //                 break;
+    //         }
+    //         power = false;
+    //         break;
+    // }
 
-    /* HORIZONTAL SWING --------------------------------------------------------------------------- */
-    uint8_t mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
-    if (this->horizontal_swing_state_ == horizontal_swing_options::OFF)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::FULL)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_FULL;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::CLEFT)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_CLEFT;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::CMIDL)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_CMIDL;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::CMID)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_CMID;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::CMIDR)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_CMIDR;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::CRIGHT)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_CRIGHT;
-    }
-    else
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
-    }
-    packet[protocol::REPORT_HSWING_BYTE] |= (mode_horizontal_swing << protocol::REPORT_HSWING_POS);
+    // packet[protocol::REPORT_MODE_BYTE] |= (mode << protocol::REPORT_MODE_POS);
+    // if (power)
+    // {
+    //     packet[protocol::REPORT_PWR_BYTE] |= protocol::REPORT_PWR_MASK;
+    // }
 
-    /* DISPLAY --------------------------------------------------------------------------- */
-    uint8_t display_mode = protocol::REPORT_DISP_MODE_AUTO;
-    if (this->display_state_ == display_options::AUTO)
-    {
-        display_mode = protocol::REPORT_DISP_MODE_AUTO;
-        this->display_power_internal_ = true;
-    }
-    else if (this->display_state_ == display_options::SET)
-    {
-        display_mode = protocol::REPORT_DISP_MODE_SET;
-        this->display_power_internal_ = true;
-    }
-    else if (this->display_state_ == display_options::ACT)
-    {
-        display_mode = protocol::REPORT_DISP_MODE_ACT;
-        this->display_power_internal_ = true;
-    }
-    else if (this->display_state_ == display_options::OUT)
-    {
-        display_mode = protocol::REPORT_DISP_MODE_OUT;
-        this->display_power_internal_ = true;
-    }
-    else if (this->display_state_ == display_options::OFF)
-    {
-        /* we do not want to alter display setting - only turn it off */
-        this->display_power_internal_ = false;
-        if (this->display_mode_internal_ == display_options::AUTO)
-        {
-            display_mode = protocol::REPORT_DISP_MODE_AUTO;
-        }
-        else if (this->display_mode_internal_ == display_options::SET)
-        {
-            display_mode = protocol::REPORT_DISP_MODE_SET;
-        }
-        else if (this->display_mode_internal_ == display_options::ACT)
-        {
-            display_mode = protocol::REPORT_DISP_MODE_ACT;
-        }
-        else if (this->display_mode_internal_ == display_options::OUT)
-        {
-            display_mode = protocol::REPORT_DISP_MODE_OUT;
-        }
-        else
-        {
-            display_mode = protocol::REPORT_DISP_MODE_AUTO;
-        }
-    }
-    else
-    {
-        display_mode = protocol::REPORT_DISP_MODE_AUTO;
-        this->display_power_internal_ = true;
-    }
+    // /* TARGET TEMPERATURE --------------------------------------------------------------------------- */
+    // uint8_t target_temperature = ((((uint8_t)this->target_temperature) - protocol::REPORT_TEMP_SET_OFF) << protocol::REPORT_TEMP_SET_POS);
+    // packet[protocol::REPORT_TEMP_SET_BYTE] |= (target_temperature & protocol::REPORT_TEMP_SET_MASK);
 
-    packet[protocol::REPORT_DISP_MODE_BYTE] |= (display_mode << protocol::REPORT_DISP_MODE_POS);
+    // /* FAN SPEED --------------------------------------------------------------------------- */
+    // /* below will default to AUTO */
+    // uint8_t fanSpeed1 = 0;
+    // uint8_t fanSpeed2 = 0;
+    // bool    fanQuiet  = false;
+    // bool    fanTurbo  = false;
 
-    if (this->display_power_internal_)
+    // const char* custom_fan_mode = this->get_custom_fan_mode();
+
+    // if (strcmp(custom_fan_mode, fan_modes::FAN_AUTO) == 0)
+    // {
+    //     fanSpeed1 = 0;
+    //     fanSpeed2 = 0;
+    //     fanQuiet  = false;
+    //     fanTurbo  = false;
+    // }
+    // else if (strcmp(custom_fan_mode, fan_modes::FAN_LOW) == 0)
+    // {
+    //     fanSpeed1 = 1;
+    //     fanSpeed2 = 1;
+    //     fanQuiet  = false;
+    //     fanTurbo  = false;
+    // }
+    // else if (strcmp(custom_fan_mode, fan_modes::FAN_QUIET) == 0)
+    // {
+    //     fanSpeed1 = 1;
+    //     fanSpeed2 = 1;
+    //     fanQuiet  = true;
+    //     fanTurbo  = false;
+    // }
+    // else if (strcmp(custom_fan_mode, fan_modes::FAN_MEDL) == 0)
+    // {
+    //     fanSpeed1 = 2;
+    //     fanSpeed2 = 2;
+    //     fanQuiet  = false;
+    //     fanTurbo  = false;
+    // }
+    // else if (strcmp(custom_fan_mode, fan_modes::FAN_MED) == 0)
+    // {
+    //     fanSpeed1 = 3;
+    //     fanSpeed2 = 2;
+    //     fanQuiet  = false;
+    //     fanTurbo  = false;
+    // }
+    // else if (strcmp(custom_fan_mode, fan_modes::FAN_MEDH) == 0)
+    // {
+    //     fanSpeed1 = 4;
+    //     fanSpeed2 = 3;
+    //     fanQuiet  = false;
+    //     fanTurbo  = false;
+    // }
+    // else if (strcmp(custom_fan_mode, fan_modes::FAN_HIGH) == 0)
+    // {
+    //     fanSpeed1 = 5;
+    //     fanSpeed2 = 3;
+    //     fanQuiet  = false;
+    //     fanTurbo  = false;
+    // }
+    // else if (strcmp(custom_fan_mode, fan_modes::FAN_TURBO) == 0)
+    // {
+    //     fanSpeed1 = 5;
+    //     fanSpeed2 = 3;
+    //     fanQuiet  = false;
+    //     fanTurbo  = true;
+    // }
+    // else
+    // {
+    //     fanSpeed1 = 0;
+    //     fanSpeed2 = 0;
+    //     fanQuiet  = false;
+    //     fanTurbo  = false;
+    // }
+
+    packet[protocol::REPORT_FAN_SPD1_BYTE] |= (fanSpeed1 << protocol::REPORT_FAN_SPD1_POS);
+    packet[protocol::REPORT_FAN_SPD2_BYTE] |= (fanSpeed2 << protocol::REPORT_FAN_SPD2_POS);
+    if (fanTurbo)
     {
-        packet[protocol::REPORT_DISP_ON_BYTE] |= protocol::REPORT_DISP_ON_MASK;
+        packet[protocol::REPORT_FAN_TURBO_BYTE] |= protocol::REPORT_FAN_TURBO_MASK;
+    }
+    if (fanQuiet)
+    {
+        packet[protocol::REPORT_FAN_QUIET_BYTE] |= protocol::REPORT_FAN_QUIET_MASK;
     }
 
-    /* DISPLAY UNIT --------------------------------------------------------------------------- */
-    if (this->display_unit_state_ == display_unit_options::DEGF)
-    {
-        packet[protocol::REPORT_DISP_F_BYTE] |= protocol::REPORT_DISP_F_MASK;
-    }
+    // /* VERTICAL SWING --------------------------------------------------------------------------- */
+    // uint8_t mode_vertical_swing = protocol::REPORT_VSWING_OFF;
+    // if (this->vertical_swing_state_ == vertical_swing_options::OFF)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_OFF;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::FULL)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_FULL;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::DOWN)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_DOWN;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::MIDD)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_MIDD;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::MID)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_MID;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::MIDU)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_MIDU;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::UP)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_UP;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::CDOWN)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_CDOWN;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::CMIDD)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_CMIDD;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::CMID)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_CMID;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::CMIDU)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_CMIDU;
+    // }
+    // else if (this->vertical_swing_state_ == vertical_swing_options::CUP)
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_CUP;
+    // }
+    // else
+    // {
+    //     mode_vertical_swing = protocol::REPORT_VSWING_OFF;
+    // }
+    // packet[protocol::REPORT_VSWING_BYTE] |= (mode_vertical_swing << protocol::REPORT_VSWING_POS);
 
-    /* PLASMA --------------------------------------------------------------------------- */
-    if (this->plasma_state_)
-    {
-        packet[protocol::REPORT_PLASMA1_BYTE] |= protocol::REPORT_PLASMA1_MASK;
-        packet[protocol::REPORT_PLASMA2_BYTE] |= protocol::REPORT_PLASMA2_MASK;
-    }
+    // /* HORIZONTAL SWING --------------------------------------------------------------------------- */
+    // uint8_t mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
+    // if (this->horizontal_swing_state_ == horizontal_swing_options::OFF)
+    // {
+    //     mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
+    // }
+    // else if (this->horizontal_swing_state_ == horizontal_swing_options::FULL)
+    // {
+    //     mode_horizontal_swing = protocol::REPORT_HSWING_FULL;
+    // }
+    // else if (this->horizontal_swing_state_ == horizontal_swing_options::CLEFT)
+    // {
+    //     mode_horizontal_swing = protocol::REPORT_HSWING_CLEFT;
+    // }
+    // else if (this->horizontal_swing_state_ == horizontal_swing_options::CMIDL)
+    // {
+    //     mode_horizontal_swing = protocol::REPORT_HSWING_CMIDL;
+    // }
+    // else if (this->horizontal_swing_state_ == horizontal_swing_options::CMID)
+    // {
+    //     mode_horizontal_swing = protocol::REPORT_HSWING_CMID;
+    // }
+    // else if (this->horizontal_swing_state_ == horizontal_swing_options::CMIDR)
+    // {
+    //     mode_horizontal_swing = protocol::REPORT_HSWING_CMIDR;
+    // }
+    // else if (this->horizontal_swing_state_ == horizontal_swing_options::CRIGHT)
+    // {
+    //     mode_horizontal_swing = protocol::REPORT_HSWING_CRIGHT;
+    // }
+    // else
+    // {
+    //     mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
+    // }
+    // packet[protocol::REPORT_HSWING_BYTE] |= (mode_horizontal_swing << protocol::REPORT_HSWING_POS);
 
-    /* SLEEP --------------------------------------------------------------------------- */
-    if (this->sleep_state_)
-    {
-        packet[protocol::REPORT_SLEEP_BYTE] |= protocol::REPORT_SLEEP_MASK;
-    }
+    // /* DISPLAY --------------------------------------------------------------------------- */
+    // uint8_t display_mode = protocol::REPORT_DISP_MODE_AUTO;
+    // if (this->display_state_ == display_options::AUTO)
+    // {
+    //     display_mode = protocol::REPORT_DISP_MODE_AUTO;
+    //     this->display_power_internal_ = true;
+    // }
+    // else if (this->display_state_ == display_options::SET)
+    // {
+    //     display_mode = protocol::REPORT_DISP_MODE_SET;
+    //     this->display_power_internal_ = true;
+    // }
+    // else if (this->display_state_ == display_options::ACT)
+    // {
+    //     display_mode = protocol::REPORT_DISP_MODE_ACT;
+    //     this->display_power_internal_ = true;
+    // }
+    // else if (this->display_state_ == display_options::OUT)
+    // {
+    //     display_mode = protocol::REPORT_DISP_MODE_OUT;
+    //     this->display_power_internal_ = true;
+    // }
+    // else if (this->display_state_ == display_options::OFF)
+    // {
+    //     /* we do not want to alter display setting - only turn it off */
+    //     this->display_power_internal_ = false;
+    //     if (this->display_mode_internal_ == display_options::AUTO)
+    //     {
+    //         display_mode = protocol::REPORT_DISP_MODE_AUTO;
+    //     }
+    //     else if (this->display_mode_internal_ == display_options::SET)
+    //     {
+    //         display_mode = protocol::REPORT_DISP_MODE_SET;
+    //     }
+    //     else if (this->display_mode_internal_ == display_options::ACT)
+    //     {
+    //         display_mode = protocol::REPORT_DISP_MODE_ACT;
+    //     }
+    //     else if (this->display_mode_internal_ == display_options::OUT)
+    //     {
+    //         display_mode = protocol::REPORT_DISP_MODE_OUT;
+    //     }
+    //     else
+    //     {
+    //         display_mode = protocol::REPORT_DISP_MODE_AUTO;
+    //     }
+    // }
+    // else
+    // {
+    //     display_mode = protocol::REPORT_DISP_MODE_AUTO;
+    //     this->display_power_internal_ = true;
+    // }
 
-    /* XFAN --------------------------------------------------------------------------- */
-    if (this->xfan_state_)
-    {
-        packet[protocol::REPORT_XFAN_BYTE] |= protocol::REPORT_XFAN_MASK;
-    }
+    // packet[protocol::REPORT_DISP_MODE_BYTE] |= (display_mode << protocol::REPORT_DISP_MODE_POS);
 
-    /* SAVE --------------------------------------------------------------------------- */
-    if (this->save_state_)
-    {
-        packet[protocol::REPORT_SAVE_BYTE] |= protocol::REPORT_SAVE_MASK;
-    }
+    // if (this->display_power_internal_)
+    // {
+    //     packet[protocol::REPORT_DISP_ON_BYTE] |= protocol::REPORT_DISP_ON_MASK;
+    // }
+
+    // /* DISPLAY UNIT --------------------------------------------------------------------------- */
+    // if (this->display_unit_state_ == display_unit_options::DEGF)
+    // {
+    //     packet[protocol::REPORT_DISP_F_BYTE] |= protocol::REPORT_DISP_F_MASK;
+    // }
+
+    // /* PLASMA --------------------------------------------------------------------------- */
+    // if (this->plasma_state_)
+    // {
+    //     packet[protocol::REPORT_PLASMA1_BYTE] |= protocol::REPORT_PLASMA1_MASK;
+    //     packet[protocol::REPORT_PLASMA2_BYTE] |= protocol::REPORT_PLASMA2_MASK;
+    // }
+
+    // /* SLEEP --------------------------------------------------------------------------- */
+    // if (this->sleep_state_)
+    // {
+    //     packet[protocol::REPORT_SLEEP_BYTE] |= protocol::REPORT_SLEEP_MASK;
+    // }
+
+    // /* XFAN --------------------------------------------------------------------------- */
+    // if (this->xfan_state_)
+    // {
+    //     packet[protocol::REPORT_XFAN_BYTE] |= protocol::REPORT_XFAN_MASK;
+    // }
+
+    // /* SAVE --------------------------------------------------------------------------- */
+    // if (this->save_state_)
+    // {
+    //     packet[protocol::REPORT_SAVE_BYTE] |= protocol::REPORT_SAVE_MASK;
+    // }
     
-    /* Do the command, length */
-    packet.insert(packet.begin(), protocol::CMD_OUT_PARAMS_SET);
-    packet.insert(packet.begin(), protocol::SET_PACKET_LEN + 2); /* Add 2 bytes as we added a command and will add checksum */
+    // /* Do the command, length */
+    // packet.insert(packet.begin(), protocol::CMD_OUT_PARAMS_SET);
+    // packet.insert(packet.begin(), protocol::SET_PACKET_LEN + 2); /* Add 2 bytes as we added a command and will add checksum */
 
-    /* Do checksum - sum of all bytes except sync and checksum itself% 0x100 
-       the module would be realized by the fact that we are using uint8_t*/
-    uint8_t checksum = 0;
-    for (uint8_t i = 0 ; i < packet.size() ; i++)
-    {
-        checksum += packet[i];
-    }
-    packet.push_back(checksum);
+    // /* Do checksum - sum of all bytes except sync and checksum itself% 0x100 
+    //    the module would be realized by the fact that we are using uint8_t*/
+    // uint8_t checksum = 0;
+    // for (uint8_t i = 0 ; i < packet.size() ; i++)
+    // {
+    //     checksum += packet[i];
+    // }
+    // packet.push_back(checksum);
 
-    /* Do SYNC bytes */
-    packet.insert(packet.begin(), protocol::SYNC);
-    packet.insert(packet.begin(), protocol::SYNC);
+    // /* Do SYNC bytes */
+    // packet.insert(packet.begin(), protocol::SYNC);
+    // packet.insert(packet.begin(), protocol::SYNC);
 
-    this->last_packet_sent_ = millis();  /* Save the time when we sent the last packet */
-    this->wait_response_ = true;
-    write_array(packet);                 /* Sent the packet by UART */
-    log_packet(packet, true);            /* Log uart for debug purposes */
+    // this->last_packet_sent_ = millis();  /* Save the time when we sent the last packet */
+    // this->wait_response_ = true;
+    // write_array(packet);                 /* Sent the packet by UART */
+    // log_packet(packet, true);            /* Log uart for debug purposes */
 
-    /* update setting state-machine */
-    switch(this->update_)
-    {
-        case ACUpdate::NoUpdate:
-            break;
-        case ACUpdate::UpdateStart:
-            this->update_ = ACUpdate::UpdateClear;
-            break;
-        case ACUpdate::UpdateClear:
-            this->update_ = ACUpdate::NoUpdate;
-            break;
-        default:
-            this->update_ = ACUpdate::NoUpdate;
-            break;
-    }
+    // /* update setting state-machine */
+    // switch(this->update_)
+    // {
+    //     case ACUpdate::NoUpdate:
+    //         break;
+    //     case ACUpdate::UpdateStart:
+    //         this->update_ = ACUpdate::UpdateClear;
+    //         break;
+    //     case ACUpdate::UpdateClear:
+    //         this->update_ = ACUpdate::NoUpdate;
+    //         break;
+    //     default:
+    //         this->update_ = ACUpdate::NoUpdate;
+    //         break;
+    // }
 }
 
 /*
