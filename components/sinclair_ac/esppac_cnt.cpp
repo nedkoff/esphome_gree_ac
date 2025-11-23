@@ -233,10 +233,10 @@ void SinclairACCNT::send_packet()
 
     // /* FAN SPEED --------------------------------------------------------------------------- */
     // /* below will default to AUTO */
-    // uint8_t fanSpeed1 = 0;
-    // uint8_t fanSpeed2 = 0;
-    // bool    fanQuiet  = false;
-    // bool    fanTurbo  = false;
+    uint8_t fanSpeed1 = 0;
+    uint8_t fanSpeed2 = 0;
+    bool    fanQuiet  = false;
+    bool    fanTurbo  = false;
 
     // const char* custom_fan_mode = this->get_custom_fan_mode();
 
