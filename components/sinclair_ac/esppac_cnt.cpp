@@ -614,7 +614,14 @@ bool SinclairACCNT::processUnitReport()
     this->mode = newMode;
 
     const char* newFanMode = determine_fan_mode();
-    if (strcmp(this->get_custom_fan_mode(), newFanMode) != 0) hasChanged = true;
+    if (this->has_custom_fan_mode())
+    {
+        if (strcmp(this->get_custom_fan_mode(), newFanMode) != 0) hasChanged = true;
+    }
+    else
+    {
+        hasChanged = true;
+    }
     this->set_custom_fan_mode_(newFanMode);
     
     float newTargetTemperature = (float)(((this->serialProcess_.data[protocol::REPORT_TEMP_SET_BYTE] & protocol::REPORT_TEMP_SET_MASK) >> protocol::REPORT_TEMP_SET_POS)
