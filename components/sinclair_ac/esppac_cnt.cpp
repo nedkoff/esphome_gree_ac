@@ -95,11 +95,11 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
         }
     }
 
-    if (call.get_custom_fan_mode().has_value())
+    if (call.has_custom_fan_mode())
     {
         ESP_LOGV(TAG, "Requested fan mode change");
         this->update_ = ACUpdate::UpdateStart;
-        this->custom_fan_mode = *call.get_custom_fan_mode();
+        this->set_custom_fan_mode_(call.get_custom_fan_mode());
     }
 
     if (call.get_swing_mode().has_value())
@@ -139,6 +139,7 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
 /*
  * Send a raw packet, as is
  */
+
 void SinclairACCNT::send_packet()
 {
     std::vector<uint8_t> packet(protocol::SET_PACKET_LEN, 0);  /* Initialize packet contents */
@@ -233,69 +234,73 @@ void SinclairACCNT::send_packet()
     uint8_t fanSpeed2 = 0;
     bool    fanQuiet  = false;
     bool    fanTurbo  = false;
+    if (this->has_custom_fan_mode())
+    {
+        const char* custom_fan_mode = this->get_custom_fan_mode();
 
-    if (this->custom_fan_mode == fan_modes::FAN_AUTO)
-    {
-        fanSpeed1 = 0;
-        fanSpeed2 = 0;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (this->custom_fan_mode == fan_modes::FAN_LOW)
-    {
-        fanSpeed1 = 1;
-        fanSpeed2 = 1;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (this->custom_fan_mode == fan_modes::FAN_QUIET)
-    {
-        fanSpeed1 = 1;
-        fanSpeed2 = 1;
-        fanQuiet  = true;
-        fanTurbo  = false;
-    }
-    else if (this->custom_fan_mode == fan_modes::FAN_MEDL)
-    {
-        fanSpeed1 = 2;
-        fanSpeed2 = 2;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (this->custom_fan_mode == fan_modes::FAN_MED)
-    {
-        fanSpeed1 = 3;
-        fanSpeed2 = 2;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (this->custom_fan_mode == fan_modes::FAN_MEDH)
-    {
-        fanSpeed1 = 4;
-        fanSpeed2 = 3;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (this->custom_fan_mode == fan_modes::FAN_HIGH)
-    {
-        fanSpeed1 = 5;
-        fanSpeed2 = 3;
-        fanQuiet  = false;
-        fanTurbo  = false;
-    }
-    else if (this->custom_fan_mode == fan_modes::FAN_TURBO)
-    {
-        fanSpeed1 = 5;
-        fanSpeed2 = 3;
-        fanQuiet  = false;
-        fanTurbo  = true;
-    }
-    else
-    {
-        fanSpeed1 = 0;
-        fanSpeed2 = 0;
-        fanQuiet  = false;
-        fanTurbo  = false;
+        if (strcmp(custom_fan_mode, fan_modes::FAN_AUTO) == 0)
+        {
+            fanSpeed1 = 0;
+            fanSpeed2 = 0;
+            fanQuiet  = false;
+            fanTurbo  = false;
+        }
+        else if (strcmp(custom_fan_mode, fan_modes::FAN_LOW) == 0)
+        {
+            fanSpeed1 = 1;
+            fanSpeed2 = 1;
+            fanQuiet  = false;
+            fanTurbo  = false;
+        }
+        else if (strcmp(custom_fan_mode, fan_modes::FAN_QUIET) == 0)
+        {
+            fanSpeed1 = 1;
+            fanSpeed2 = 1;
+            fanQuiet  = true;
+            fanTurbo  = false;
+        }
+        else if (strcmp(custom_fan_mode, fan_modes::FAN_MEDL) == 0)
+        {
+            fanSpeed1 = 2;
+            fanSpeed2 = 2;
+            fanQuiet  = false;
+            fanTurbo  = false;
+        }
+        else if (strcmp(custom_fan_mode, fan_modes::FAN_MED) == 0)
+        {
+            fanSpeed1 = 3;
+            fanSpeed2 = 2;
+            fanQuiet  = false;
+            fanTurbo  = false;
+        }
+        else if (strcmp(custom_fan_mode, fan_modes::FAN_MEDH) == 0)
+        {
+            fanSpeed1 = 4;
+            fanSpeed2 = 3;
+            fanQuiet  = false;
+            fanTurbo  = false;
+        }
+        else if (strcmp(custom_fan_mode, fan_modes::FAN_HIGH) == 0)
+        {
+            fanSpeed1 = 5;
+            fanSpeed2 = 3;
+            fanQuiet  = false;
+            fanTurbo  = false;
+        }
+        else if (strcmp(custom_fan_mode, fan_modes::FAN_TURBO) == 0)
+        {
+            fanSpeed1 = 5;
+            fanSpeed2 = 3;
+            fanQuiet  = false;
+            fanTurbo  = true;
+        }
+        else
+        {
+            fanSpeed1 = 0;
+            fanSpeed2 = 0;
+            fanQuiet  = false;
+            fanTurbo  = false;
+        }
     }
 
     packet[protocol::REPORT_FAN_SPD1_BYTE] |= (fanSpeed1 << protocol::REPORT_FAN_SPD1_POS);
@@ -608,9 +613,16 @@ bool SinclairACCNT::processUnitReport()
     if (this->mode != newMode) hasChanged = true;
     this->mode = newMode;
 
-    std::string newFanMode = determine_fan_mode();
-    if (this->custom_fan_mode != newFanMode) hasChanged = true;
-    this->custom_fan_mode = newFanMode;
+    const char* newFanMode = determine_fan_mode();
+    if (this->has_custom_fan_mode())
+    {
+        if (strcmp(this->get_custom_fan_mode(), newFanMode) != 0) hasChanged = true;
+    }
+    else
+    {
+        hasChanged = true;
+    }
+    this->set_custom_fan_mode_(newFanMode);
     
     float newTargetTemperature = (float)(((this->serialProcess_.data[protocol::REPORT_TEMP_SET_BYTE] & protocol::REPORT_TEMP_SET_MASK) >> protocol::REPORT_TEMP_SET_POS)
         + protocol::REPORT_TEMP_SET_OFF);
@@ -702,7 +714,7 @@ climate::ClimateMode SinclairACCNT::determine_mode()
     }
 }
 
-std::string SinclairACCNT::determine_fan_mode()
+const char* SinclairACCNT::determine_fan_mode()
 {
     /* fan setting has quite complex representation in the packet, brace for it */
     uint8_t fanSpeed1 = (this->serialProcess_.data[protocol::REPORT_FAN_SPD1_BYTE]  & protocol::REPORT_FAN_SPD1_MASK) >> protocol::REPORT_FAN_SPD1_POS;
