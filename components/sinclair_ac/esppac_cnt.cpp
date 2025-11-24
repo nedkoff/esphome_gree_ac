@@ -140,99 +140,96 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
  * Send a raw packet, as is
  */
 
-static std::vector<uint8_t> packet(protocol::SET_PACKET_LEN + 10, 0);  /* Initialize packet contents */
-
 void SinclairACCNT::send_packet()
 {
-    packet.clear();
-    packet.insert(packet.begin(), protocol::SET_PACKET_LEN, 0);
+    std::vector<uint8_t> packet(protocol::SET_PACKET_LEN, 0);  /* Initialize packet contents */
 
-    // if (this->wait_response_ == true && (millis() - this->last_packet_sent_) < protocol::TIME_REFRESH_PERIOD_MS)
-    // {
-    //     /* do net send packet too often or when we are waiting for report to come */
-    //     return;
-    // }
+    if (this->wait_response_ == true && (millis() - this->last_packet_sent_) < protocol::TIME_REFRESH_PERIOD_MS)
+    {
+        /* do net send packet too often or when we are waiting for report to come */
+        return;
+    }
     
-    // packet[protocol::SET_CONST_02_BYTE] = protocol::SET_CONST_02_VAL; /* Some always 0x02 byte... */
-    // packet[protocol::SET_CONST_BIT_BYTE] = protocol::SET_CONST_BIT_MASK; /* Some always true bit */
+    packet[protocol::SET_CONST_02_BYTE] = protocol::SET_CONST_02_VAL; /* Some always 0x02 byte... */
+    packet[protocol::SET_CONST_BIT_BYTE] = protocol::SET_CONST_BIT_MASK; /* Some always true bit */
 
-    // /* Prepare the rest of the frame */
-    // /* this handles tricky part of 0xAF value and flag marking that WiFi does not apply any changes */
-    // switch(this->update_)
-    // {
-    //     default:
-    //     case ACUpdate::NoUpdate:
-    //         packet[protocol::SET_NOCHANGE_BYTE] |= protocol::SET_NOCHANGE_MASK;
-    //         break;
-    //     case ACUpdate::UpdateStart:
-    //         packet[protocol::SET_AF_BYTE] = protocol::SET_AF_VAL;
-    //         break;
-    //     case ACUpdate::UpdateClear:
-    //         break;
-    // }
+    /* Prepare the rest of the frame */
+    /* this handles tricky part of 0xAF value and flag marking that WiFi does not apply any changes */
+    switch(this->update_)
+    {
+        default:
+        case ACUpdate::NoUpdate:
+            packet[protocol::SET_NOCHANGE_BYTE] |= protocol::SET_NOCHANGE_MASK;
+            break;
+        case ACUpdate::UpdateStart:
+            packet[protocol::SET_AF_BYTE] = protocol::SET_AF_VAL;
+            break;
+        case ACUpdate::UpdateClear:
+            break;
+    }
 
-    // /* MODE and POWER --------------------------------------------------------------------------- */
-    // uint8_t mode = protocol::REPORT_MODE_AUTO;
-    // bool power = false;
-    // switch (this->mode)
-    // {
-    //     case climate::CLIMATE_MODE_AUTO:
-    //         mode = protocol::REPORT_MODE_AUTO;
-    //         power = true;
-    //         break;
-    //     case climate::CLIMATE_MODE_COOL:
-    //         mode = protocol::REPORT_MODE_COOL;
-    //         power = true;
-    //         break;
-    //     case climate::CLIMATE_MODE_DRY:
-    //         mode = protocol::REPORT_MODE_DRY;
-    //         power = true;
-    //         break;
-    //     case climate::CLIMATE_MODE_FAN_ONLY:
-    //         mode = protocol::REPORT_MODE_FAN;
-    //         power = true;
-    //         break;
-    //     case climate::CLIMATE_MODE_HEAT:
-    //         mode = protocol::REPORT_MODE_HEAT;
-    //         power = true;
-    //         break;
-    //     default:
-    //     case climate::CLIMATE_MODE_OFF:
-    //         /* In case of MODE_OFF we will not alter the last mode setting recieved from AC, see determine_mode() */
-    //         switch (this->mode_internal_)
-    //         {
-    //             case climate::CLIMATE_MODE_AUTO:
-    //                 mode = protocol::REPORT_MODE_AUTO;
-    //                 break;
-    //             case climate::CLIMATE_MODE_COOL:
-    //                 mode = protocol::REPORT_MODE_COOL;
-    //                 break;
-    //             case climate::CLIMATE_MODE_DRY:
-    //                 mode = protocol::REPORT_MODE_DRY;
-    //                 break;
-    //             case climate::CLIMATE_MODE_FAN_ONLY:
-    //                 mode = protocol::REPORT_MODE_FAN;
-    //                 break;
-    //             case climate::CLIMATE_MODE_HEAT:
-    //                 mode = protocol::REPORT_MODE_HEAT;
-    //                 break;
-    //         }
-    //         power = false;
-    //         break;
-    // }
+    /* MODE and POWER --------------------------------------------------------------------------- */
+    uint8_t mode = protocol::REPORT_MODE_AUTO;
+    bool power = false;
+    switch (this->mode)
+    {
+        case climate::CLIMATE_MODE_AUTO:
+            mode = protocol::REPORT_MODE_AUTO;
+            power = true;
+            break;
+        case climate::CLIMATE_MODE_COOL:
+            mode = protocol::REPORT_MODE_COOL;
+            power = true;
+            break;
+        case climate::CLIMATE_MODE_DRY:
+            mode = protocol::REPORT_MODE_DRY;
+            power = true;
+            break;
+        case climate::CLIMATE_MODE_FAN_ONLY:
+            mode = protocol::REPORT_MODE_FAN;
+            power = true;
+            break;
+        case climate::CLIMATE_MODE_HEAT:
+            mode = protocol::REPORT_MODE_HEAT;
+            power = true;
+            break;
+        default:
+        case climate::CLIMATE_MODE_OFF:
+            /* In case of MODE_OFF we will not alter the last mode setting recieved from AC, see determine_mode() */
+            switch (this->mode_internal_)
+            {
+                case climate::CLIMATE_MODE_AUTO:
+                    mode = protocol::REPORT_MODE_AUTO;
+                    break;
+                case climate::CLIMATE_MODE_COOL:
+                    mode = protocol::REPORT_MODE_COOL;
+                    break;
+                case climate::CLIMATE_MODE_DRY:
+                    mode = protocol::REPORT_MODE_DRY;
+                    break;
+                case climate::CLIMATE_MODE_FAN_ONLY:
+                    mode = protocol::REPORT_MODE_FAN;
+                    break;
+                case climate::CLIMATE_MODE_HEAT:
+                    mode = protocol::REPORT_MODE_HEAT;
+                    break;
+            }
+            power = false;
+            break;
+    }
 
-    // packet[protocol::REPORT_MODE_BYTE] |= (mode << protocol::REPORT_MODE_POS);
-    // if (power)
-    // {
-    //     packet[protocol::REPORT_PWR_BYTE] |= protocol::REPORT_PWR_MASK;
-    // }
+    packet[protocol::REPORT_MODE_BYTE] |= (mode << protocol::REPORT_MODE_POS);
+    if (power)
+    {
+        packet[protocol::REPORT_PWR_BYTE] |= protocol::REPORT_PWR_MASK;
+    }
 
-    // /* TARGET TEMPERATURE --------------------------------------------------------------------------- */
-    // uint8_t target_temperature = ((((uint8_t)this->target_temperature) - protocol::REPORT_TEMP_SET_OFF) << protocol::REPORT_TEMP_SET_POS);
-    // packet[protocol::REPORT_TEMP_SET_BYTE] |= (target_temperature & protocol::REPORT_TEMP_SET_MASK);
+    /* TARGET TEMPERATURE --------------------------------------------------------------------------- */
+    uint8_t target_temperature = ((((uint8_t)this->target_temperature) - protocol::REPORT_TEMP_SET_OFF) << protocol::REPORT_TEMP_SET_POS);
+    packet[protocol::REPORT_TEMP_SET_BYTE] |= (target_temperature & protocol::REPORT_TEMP_SET_MASK);
 
-    // /* FAN SPEED --------------------------------------------------------------------------- */
-    // /* below will default to AUTO */
+    /* FAN SPEED --------------------------------------------------------------------------- */
+    /* below will default to AUTO */
     uint8_t fanSpeed1 = 0;
     uint8_t fanSpeed2 = 0;
     bool    fanQuiet  = false;
