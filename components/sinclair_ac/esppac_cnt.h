@@ -179,7 +179,7 @@ class SinclairACCNT : public SinclairAC {
         void handle_packet();
 
         climate::ClimateMode determine_mode();
-        std::string determine_fan_mode();
+        const char* determine_fan_mode();
 
         std::string determine_vertical_swing();
         std::string determine_horizontal_swing();

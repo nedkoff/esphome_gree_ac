@@ -12,10 +12,7 @@ climate::ClimateTraits SinclairAC::traits()
 {
     auto traits = climate::ClimateTraits();
 
-    traits.set_supports_action(false);
-
-    traits.set_supports_current_temperature(true);
-    traits.set_supports_two_point_target_temperature(false);
+    traits.set_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
     traits.set_visual_min_temperature(MIN_TEMPERATURE);
     traits.set_visual_max_temperature(MAX_TEMPERATURE);
     traits.set_visual_temperature_step(TEMPERATURE_STEP);
@@ -23,14 +20,9 @@ climate::ClimateTraits SinclairAC::traits()
     traits.set_supported_modes({climate::CLIMATE_MODE_OFF, climate::CLIMATE_MODE_AUTO, climate::CLIMATE_MODE_COOL,
                                 climate::CLIMATE_MODE_HEAT, climate::CLIMATE_MODE_FAN_ONLY, climate::CLIMATE_MODE_DRY});
 
-    traits.add_supported_custom_fan_mode(fan_modes::FAN_AUTO);
-    traits.add_supported_custom_fan_mode(fan_modes::FAN_QUIET);
-    traits.add_supported_custom_fan_mode(fan_modes::FAN_LOW);
-    traits.add_supported_custom_fan_mode(fan_modes::FAN_MEDL);
-    traits.add_supported_custom_fan_mode(fan_modes::FAN_MED);
-    traits.add_supported_custom_fan_mode(fan_modes::FAN_MEDH);
-    traits.add_supported_custom_fan_mode(fan_modes::FAN_HIGH);
-    traits.add_supported_custom_fan_mode(fan_modes::FAN_TURBO);
+    traits.set_supported_custom_fan_modes({fan_modes::FAN_AUTO, fan_modes::FAN_QUIET, fan_modes::FAN_LOW,
+                                           fan_modes::FAN_MEDL, fan_modes::FAN_MED, fan_modes::FAN_MEDH,
+                                           fan_modes::FAN_HIGH, fan_modes::FAN_TURBO});
 
     traits.set_supported_swing_modes({climate::CLIMATE_SWING_OFF, climate::CLIMATE_SWING_BOTH,
                                       climate::CLIMATE_SWING_VERTICAL, climate::CLIMATE_SWING_HORIZONTAL});
