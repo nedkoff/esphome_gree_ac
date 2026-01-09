@@ -143,18 +143,19 @@ void SinclairAC::update_swing_horizontal(const std::string &swing)
     }
 }
 
-
-
 void SinclairAC::update_swing_vertical(const std::string &swing)
 {
     this->vertical_swing_state_ = swing;
 
-    if (this->vertical_swing_select_ != nullptr && 
-        this->vertical_swing_select_->state != this->vertical_swing_state_)
-    {
-        this->vertical_swing_select_->publish_state(this->vertical_swing_state_);
+    if (this->vertical_swing_select_ != nullptr) {
+        const char *current = this->vertical_swing_select_->current_option();  // const char* (може да е nullptr)
+
+        if (current == nullptr || this->vertical_swing_state_ != current) {
+            this->vertical_swing_select_->publish_state(this->vertical_swing_state_);
+        }
     }
 }
+
 
 void SinclairAC::update_display(const std::string &display)
 {
