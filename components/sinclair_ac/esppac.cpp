@@ -134,12 +134,14 @@ void SinclairAC::update_swing_horizontal(const std::string &swing)
 {
     this->horizontal_swing_state_ = swing;
 
-    if (this->horizontal_swing_select_ != nullptr &&
-        this->horizontal_swing_select_->state != this->horizontal_swing_state_)
-    {
-        this->horizontal_swing_select_->publish_state(this->horizontal_swing_state_);
+    if (this->horizontal_swing_select_ != nullptr) {
+        auto current = this->horizontal_swing_select_->current_option();  // std::optional<std::string>
+        if (!current.has_value() || *current != this->horizontal_swing_state_) {
+            this->horizontal_swing_select_->publish_state(this->horizontal_swing_state_);
+        }
     }
 }
+
 
 void SinclairAC::update_swing_vertical(const std::string &swing)
 {
