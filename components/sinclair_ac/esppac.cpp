@@ -150,7 +150,7 @@ void SinclairAC::update_swing_vertical(const std::string &swing)
     if (this->vertical_swing_select_ != nullptr) {
         const char *current = this->vertical_swing_select_->current_option();  // const char* (може да е nullptr)
 
-        if (current == nullptr || this->vertical_swing_state_ != current) {
+        if (current == nullptr || current != this->vertical_swing_state_ != current) {
             this->vertical_swing_select_->publish_state(this->vertical_swing_state_);
         }
     }
