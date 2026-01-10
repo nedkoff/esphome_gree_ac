@@ -247,13 +247,7 @@ void SinclairACCNT::send_packet()
             fanQuiet  = true;
             fanTurbo  = false;
         }
-        else if (strcmp(custom_fan_mode, fan_modes::FAN_MEDL) == 0)
-        {
-            fanSpeed1 = 2;
-            fanSpeed2 = 2;
-            fanQuiet  = false;
-            fanTurbo  = false;
-        }
+        
         else if (strcmp(custom_fan_mode, fan_modes::FAN_MED) == 0)
         {
             fanSpeed1 = 3;
@@ -261,13 +255,7 @@ void SinclairACCNT::send_packet()
             fanQuiet  = false;
             fanTurbo  = false;
         }
-        else if (strcmp(custom_fan_mode, fan_modes::FAN_MEDH) == 0)
-        {
-            fanSpeed1 = 4;
-            fanSpeed2 = 3;
-            fanQuiet  = false;
-            fanTurbo  = false;
-        }
+       
         else if (strcmp(custom_fan_mode, fan_modes::FAN_HIGH) == 0)
         {
             fanSpeed1 = 5;
@@ -681,17 +669,9 @@ const char* SinclairACCNT::determine_fan_mode()
     {
         return fan_modes::FAN_QUIET;
     }
-    else if (fanSpeed1 == 2 && fanSpeed2 == 2 && fanQuiet == false && fanTurbo == false)
-    {
-        return fan_modes::FAN_MEDL;
-    }
     else if (fanSpeed1 == 3 && fanSpeed2 == 2 && fanQuiet == false && fanTurbo == false)
     {
         return fan_modes::FAN_MED;
-    }
-    else if (fanSpeed1 == 4 && fanSpeed2 == 3 && fanQuiet == false && fanTurbo == false)
-    {
-        return fan_modes::FAN_MEDH;
     }
     else if (fanSpeed1 == 5 && fanSpeed2 == 3 && fanQuiet == false && fanTurbo == false)
     {
