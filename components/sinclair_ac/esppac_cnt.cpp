@@ -107,30 +107,18 @@ void SinclairACCNT::control(const climate::ClimateCall &call)
         ESP_LOGV(TAG, "Requested swing mode change");
         this->update_ = ACUpdate::UpdateStart;
         switch (*call.get_swing_mode()) {
-            case climate::CLIMATE_SWING_BOTH:
-                this->vertical_swing_state_   =   vertical_swing_options::FULL;
-                this->horizontal_swing_state_ = horizontal_swing_options::FULL;
-                break;
-            case climate::CLIMATE_SWING_OFF:
+           case climate::CLIMATE_SWING_OFF:
                 /* both center */
                 this->vertical_swing_state_   =   vertical_swing_options::CMID;
-                this->horizontal_swing_state_ = horizontal_swing_options::CMID;
                 break;
             case climate::CLIMATE_SWING_VERTICAL:
-                /* vertical full, horizontal center */
+                
                 this->vertical_swing_state_   =   vertical_swing_options::FULL;
-                this->horizontal_swing_state_ = horizontal_swing_options::CMID;
-                break;
-            case climate::CLIMATE_SWING_HORIZONTAL:
-                /* horizontal full, vertical center */
-                this->vertical_swing_state_   =   vertical_swing_options::CMID;
-                this->horizontal_swing_state_ = horizontal_swing_options::FULL;
                 break;
             default:
                 ESP_LOGV(TAG, "Unsupported swing mode requested");
                 /* both center */
                 this->vertical_swing_state_   =   vertical_swing_options::CMID;
-                this->horizontal_swing_state_ = horizontal_swing_options::CMID;
                 break;
         }
     }
@@ -370,42 +358,7 @@ void SinclairACCNT::send_packet()
     }
     packet[protocol::REPORT_VSWING_BYTE] |= (mode_vertical_swing << protocol::REPORT_VSWING_POS);
 
-    /* HORIZONTAL SWING --------------------------------------------------------------------------- */
-    uint8_t mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
-    if (this->horizontal_swing_state_ == horizontal_swing_options::OFF)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::FULL)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_FULL;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::CLEFT)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_CLEFT;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::CMIDL)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_CMIDL;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::CMID)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_CMID;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::CMIDR)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_CMIDR;
-    }
-    else if (this->horizontal_swing_state_ == horizontal_swing_options::CRIGHT)
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_CRIGHT;
-    }
-    else
-    {
-        mode_horizontal_swing = protocol::REPORT_HSWING_OFF;
-    }
-    packet[protocol::REPORT_HSWING_BYTE] |= (mode_horizontal_swing << protocol::REPORT_HSWING_POS);
-
+    
     /* DISPLAY --------------------------------------------------------------------------- */
     uint8_t display_mode = protocol::REPORT_DISP_MODE_AUTO;
     if (this->display_state_ == display_options::AUTO)
@@ -639,20 +592,14 @@ bool SinclairACCNT::processUnitReport()
     }
 
     std::string verticalSwing = determine_vertical_swing();
-    std::string horizontalSwing = determine_horizontal_swing();
-
+    
     this->update_swing_vertical(verticalSwing);
-    this->update_swing_horizontal(horizontalSwing);
-
+    
     climate::ClimateSwingMode newSwingMode;
     /* update legacy swing mode to somehow represent actual state and support
        this setting without detailed settings done with additional switches */
-    if (verticalSwing == vertical_swing_options::FULL && horizontalSwing == horizontal_swing_options::FULL)
-        newSwingMode = climate::CLIMATE_SWING_BOTH;
-    else if (verticalSwing == vertical_swing_options::FULL)
+    if (verticalSwing == vertical_swing_options::FULL)
         newSwingMode = climate::CLIMATE_SWING_VERTICAL;
-    else if (horizontalSwing == horizontal_swing_options::FULL)
-        newSwingMode = climate::CLIMATE_SWING_HORIZONTAL;
     else
         newSwingMode = climate::CLIMATE_SWING_OFF;
     
@@ -796,30 +743,6 @@ std::string SinclairACCNT::determine_vertical_swing()
     }
 }
 
-std::string SinclairACCNT::determine_horizontal_swing()
-{
-    uint8_t mode = (this->serialProcess_.data[protocol::REPORT_HSWING_BYTE]  & protocol::REPORT_HSWING_MASK) >> protocol::REPORT_HSWING_POS;
-
-    switch (mode) {
-        case protocol::REPORT_HSWING_OFF:
-            return horizontal_swing_options::OFF;
-        case protocol::REPORT_HSWING_FULL:
-            return horizontal_swing_options::FULL;
-        case protocol::REPORT_HSWING_CLEFT:
-            return horizontal_swing_options::CLEFT;
-        case protocol::REPORT_HSWING_CMIDL:
-            return horizontal_swing_options::CMIDL;
-        case protocol::REPORT_HSWING_CMID:
-            return horizontal_swing_options::CMID;
-        case protocol::REPORT_HSWING_CMIDR:
-            return horizontal_swing_options::CMIDR;
-        case protocol::REPORT_HSWING_CRIGHT:
-            return horizontal_swing_options::CRIGHT;
-        default:
-            ESP_LOGW(TAG, "Received unknown horizontal swing mode");
-            return horizontal_swing_options::OFF;
-    }
-}
 
 std::string SinclairACCNT::determine_display()
 {
@@ -902,16 +825,6 @@ void SinclairACCNT::on_vertical_swing_change(const std::string &swing)
     this->vertical_swing_state_ = swing;
 }
 
-void SinclairACCNT::on_horizontal_swing_change(const std::string &swing)
-{
-    if (this->state_ != ACState::Ready)
-        return;
-
-    ESP_LOGD(TAG, "Setting horizontal swing position");
-
-    this->update_ = ACUpdate::UpdateStart;
-    this->horizontal_swing_state_ = swing;
-}
 
 void SinclairACCNT::on_display_change(const std::string &display)
 {
