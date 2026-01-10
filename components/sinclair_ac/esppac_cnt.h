@@ -147,8 +147,7 @@ class SinclairACCNT : public SinclairAC {
     public:
         void control(const climate::ClimateCall &call) override;
 
-        void on_horizontal_swing_change(const std::string &swing) override;
-        void on_vertical_swing_change(const std::string &swing) override;
+       void on_vertical_swing_change(const std::string &swing) override;
 
         void on_display_change(const std::string &display) override;
         void on_display_unit_change(const std::string &display_unit) override;
@@ -182,8 +181,7 @@ class SinclairACCNT : public SinclairAC {
         const char* determine_fan_mode();
 
         std::string determine_vertical_swing();
-        std::string determine_horizontal_swing();
-
+        
         std::string determine_display();
         std::string determine_display_unit();
 
