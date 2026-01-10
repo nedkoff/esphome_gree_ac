@@ -36,6 +36,36 @@ void SinclairACCNT::loop()
 
         this->last_packet_received_ = millis();  /* Set the time at which we received our last packet */
 
+                // --- PEEK DISPLAY ACK (do not change internal state) ---
+        if (this->pending_display_ && this->serialProcess_.data[3] == protocol::CMD_IN_UNIT_REPORT) {
+            auto tmp = this->serialProcess_.data;
+            // strip header (7E 7E LEN CMD) and checksum, same as handle_packet()
+            tmp.erase(tmp.begin(), tmp.begin() + 4);
+            tmp.pop_back();
+
+            uint8_t mode = (tmp[protocol::REPORT_DISP_MODE_BYTE] & protocol::REPORT_DISP_MODE_MASK) >> protocol::REPORT_DISP_MODE_POS;
+            bool disp_on = (tmp[protocol::REPORT_DISP_ON_BYTE] & protocol::REPORT_DISP_ON_MASK) != 0;
+
+            std::string disp;
+            if (!disp_on) {
+                disp = display_options::OFF;
+            } else {
+                switch (mode) {
+                    case protocol::REPORT_DISP_MODE_AUTO: disp = display_options::AUTO; break;
+                    case protocol::REPORT_DISP_MODE_SET:  disp = display_options::SET;  break;
+                    case protocol::REPORT_DISP_MODE_ACT:  disp = display_options::ACT;  break;
+                    case protocol::REPORT_DISP_MODE_OUT:  disp = display_options::OUT;  break;
+                    default:                              disp = display_options::AUTO; break;
+                }
+            }
+
+            if (disp == this->pending_display_value_) {
+                ESP_LOGD(TAG, "Display ACK: %s", disp.c_str());
+                this->pending_display_ = false;
+            }
+        }
+
+
         /* A valid recieved packet of accepted type marks module as being ready */
         if (this->state_ != ACState::Ready)
         {
@@ -52,6 +82,21 @@ void SinclairACCNT::loop()
 
     /* we will send a packet to the AC as a reponse to indicate changes */
     send_packet();
+
+        // --- RETRY DISPLAY if no ACK in time ---
+    if (this->pending_display_ && (int32_t)(millis() - this->pending_display_deadline_) >= 0) {
+        if (this->pending_display_retries_ < PENDING_MAX_RETRIES) {
+            this->pending_display_retries_++;
+            this->pending_display_deadline_ = millis() + PENDING_ACK_TIMEOUT_MS;
+
+            ESP_LOGW(TAG, "Display ACK timeout, retry %u", this->pending_display_retries_);
+            this->update_ = ACUpdate::UpdateStart;
+        } else {
+            ESP_LOGW(TAG, "Display ACK failed after retries, giving up");
+            this->pending_display_ = false;
+        }
+    }
+
 
     /* if there are no packets for 5 seconds - mark module as not ready */
     if (millis() - this->last_packet_received_ >= protocol::TIME_TIMEOUT_INACTIVE_MS)
@@ -819,6 +864,13 @@ void SinclairACCNT::on_display_change(const std::string &display)
 
     this->update_ = ACUpdate::UpdateStart;
     this->display_state_ = display;
+
+    // mark display pending ACK
+    this->pending_display_ = true;
+    this->pending_display_value_ = display;
+    this->pending_display_retries_ = 0;
+    this->pending_display_deadline_ = millis() + PENDING_ACK_TIMEOUT_MS;
+
 }
 
 void SinclairACCNT::on_display_unit_change(const std::string &display_unit)
