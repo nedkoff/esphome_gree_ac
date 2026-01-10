@@ -8,7 +8,7 @@ This generally replaces stock WiFi module, sometimes giving a little more advanc
 
 Work is still in progress!
 
-Tested with Gree Viola, mostly works, sometimes need to send parameter change twice - work in progress.
+Tested with Gree Viola, mostly works, turbo and quiet not tested, sometimes need to send parameter change twice - work in progress.
 
 Communication protocol is based on my own reverse-engineering.
 
