@@ -44,5 +44,4 @@ On some stock WiFi PCBs AC unit connector pins are marked on silkscreen.
 * It was reported [#1](https://github.com/piotrva/esphome_gree_ac/issues/1) that with some changes the code works with Lennox li024ci AC
 
 **TODO**
-* Support Timers - maybe unnecessray as timers can be managed by Home Assistant
-* Support Time sync - maybe unnecessray as timers can be managed by Home Assistant
+* Fixing sometimes need to send parameter change twice
