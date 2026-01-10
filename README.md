@@ -4,9 +4,11 @@ This generally replaces stock WiFi module, sometimes giving a little more advanc
 
 **USE AT YOUR OWN RISK!**
 
+** This fork is optimased for Gree GWH12RB-K3DNA3G/I(Viola) **
+
 Work is still in progress!
 
-Tested with Sinclair AC (MV-H09BIF), mostly works, sometimes need to send parameter change twice - need to investigate.
+Tested with Gree Viola, mostly works, sometimes need to send parameter change twice - need to investigate.
 
 Communication protocol is based on my own reverse-engineering.
 
