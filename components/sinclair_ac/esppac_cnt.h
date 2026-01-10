@@ -63,7 +63,7 @@ namespace protocol {
     static const uint8_t REPORT_TEMP_ACT_BYTE  = 42;
     static const uint8_t REPORT_TEMP_ACT_MASK  = 0b11111111;
     static const uint8_t REPORT_TEMP_ACT_POS   = 0;
-    static const uint8_t REPORT_TEMP_ACT_OFF   = 18;  /* temperature offset from value in packet */
+    static const uint8_t REPORT_TEMP_ACT_OFF   = 19;  /* temperature offset from value in packet */
     static const float   REPORT_TEMP_ACT_DIV   = 2.0; /* temperature divider from value in packet */
 
     static const uint8_t REPORT_HSWING_BYTE    = 8;
