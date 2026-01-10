@@ -24,8 +24,7 @@ climate::ClimateTraits SinclairAC::traits()
                                            fan_modes::FAN_MEDL, fan_modes::FAN_MED, fan_modes::FAN_MEDH,
                                            fan_modes::FAN_HIGH, fan_modes::FAN_TURBO});
 
-    traits.set_supported_swing_modes({climate::CLIMATE_SWING_OFF, climate::CLIMATE_SWING_BOTH,
-                                      climate::CLIMATE_SWING_VERTICAL, climate::CLIMATE_SWING_HORIZONTAL});
+    traits.set_supported_swing_modes({climate::CLIMATE_SWING_OFF, climate::CLIMATE_SWING_VERTICAL});
 
     return traits;
 }
@@ -130,18 +129,6 @@ void SinclairAC::update_target_temperature(float temperature)
     this->target_temperature = temperature;
 }
 
-void SinclairAC::update_swing_horizontal(const std::string &swing)
-{
-    this->horizontal_swing_state_ = swing;
-
-    if (this->horizontal_swing_select_ != nullptr) {
-        const char *current = this->horizontal_swing_select_->current_option();  // const char* (може да е nullptr)
-
-        if (current == nullptr || this->horizontal_swing_state_ != current) {
-            this->horizontal_swing_select_->publish_state(this->horizontal_swing_state_);
-        }
-    }
-}
 
 void SinclairAC::update_swing_vertical(const std::string &swing)
 {
@@ -264,15 +251,6 @@ void SinclairAC::set_vertical_swing_select(select::Select *vertical_swing_select
     });
 }
 
-void SinclairAC::set_horizontal_swing_select(select::Select *horizontal_swing_select)
-{
-    this->horizontal_swing_select_ = horizontal_swing_select;
-    this->horizontal_swing_select_->add_on_state_callback([this](const std::string &value, size_t index) {
-        if (value == this->horizontal_swing_state_)
-            return;
-        this->on_horizontal_swing_change(value);
-    });
-}
 
 void SinclairAC::set_display_select(select::Select *display_select)
 {
