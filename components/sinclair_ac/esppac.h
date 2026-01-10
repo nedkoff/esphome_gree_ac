@@ -33,16 +33,6 @@ namespace fan_modes{
     const char* const FAN_TURBO = "7 - Turbo";
 }
 
-/* this must be same as HORIZONTAL_SWING_OPTIONS in climate.py */
-namespace horizontal_swing_options{
-    const std::string OFF    = "0 - OFF";
-    const std::string FULL   = "1 - Swing - Full";
-    const std::string CLEFT  = "2 - Constant - Left";
-    const std::string CMIDL  = "3 - Constant - Mid-Left";
-    const std::string CMID   = "4 - Constant - Middle";
-    const std::string CMIDR  = "5 - Constant - Mid-Right";
-    const std::string CRIGHT = "6 - Constant - Right";
-}
 
 /* this must be same as VERTICAL_SWING_OPTIONS in climate.py */
 namespace vertical_swing_options{
@@ -94,8 +84,7 @@ typedef struct {
 class SinclairAC : public Component, public uart::UARTDevice, public climate::Climate {
     public:
         void set_vertical_swing_select(select::Select *vertical_swing_select);
-        void set_horizontal_swing_select(select::Select *horizontal_swing_select);
-
+        
         void set_display_select(select::Select *display_select);
         void set_display_unit_select(select::Select *display_unit_select);
 
@@ -111,8 +100,7 @@ class SinclairAC : public Component, public uart::UARTDevice, public climate::Cl
 
     protected:
         select::Select *vertical_swing_select_   = nullptr; /* Advanced vertical swing select */
-        select::Select *horizontal_swing_select_ = nullptr; /* Advanced horizontal swing select */
-
+        
         select::Select *display_select_          = nullptr; /* Select for setting display mode */
         select::Select *display_unit_select_     = nullptr; /* Select for setting display temperature unit */
 
@@ -124,8 +112,7 @@ class SinclairAC : public Component, public uart::UARTDevice, public climate::Cl
         sensor::Sensor *current_temperature_sensor_ = nullptr; /* If user wants to replace reported temperature by an external sensor readout */
 
         std::string vertical_swing_state_;
-        std::string horizontal_swing_state_;
-
+        
         std::string display_state_;
         std::string display_unit_state_;
 
@@ -149,7 +136,6 @@ class SinclairAC : public Component, public uart::UARTDevice, public climate::Cl
         void update_current_temperature(float temperature);
         void update_target_temperature(float temperature);
 
-        void update_swing_horizontal(const std::string &swing);
         void update_swing_vertical(const std::string &swing);
 
         void update_display(const std::string &display);
@@ -160,7 +146,6 @@ class SinclairAC : public Component, public uart::UARTDevice, public climate::Cl
         void update_xfan(bool xfan);
         void update_save(bool save);
 
-        virtual void on_horizontal_swing_change(const std::string &swing) = 0;
         virtual void on_vertical_swing_change(const std::string &swing) = 0;
 
         virtual void on_display_change(const std::string &display) = 0;
