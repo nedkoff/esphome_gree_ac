@@ -651,42 +651,46 @@ climate::ClimateMode SinclairACCNT::determine_mode()
 
 const char* SinclairACCNT::determine_fan_mode()
 {
-    /* fan setting has quite complex representation in the packet, brace for it */
     uint8_t fanSpeed1 = (this->serialProcess_.data[protocol::REPORT_FAN_SPD1_BYTE]  & protocol::REPORT_FAN_SPD1_MASK) >> protocol::REPORT_FAN_SPD1_POS;
     uint8_t fanSpeed2 = (this->serialProcess_.data[protocol::REPORT_FAN_SPD2_BYTE]  & protocol::REPORT_FAN_SPD2_MASK) >> protocol::REPORT_FAN_SPD2_POS;
     bool    fanQuiet  = (this->serialProcess_.data[protocol::REPORT_FAN_QUIET_BYTE] & protocol::REPORT_FAN_QUIET_MASK) != 0;
     bool    fanTurbo  = (this->serialProcess_.data[protocol::REPORT_FAN_TURBO_BYTE] & protocol::REPORT_FAN_TURBO_MASK) != 0;
-    /* we have extracted all the data, let's do the processing */
-    if      (fanSpeed1 == 0 && fanSpeed2 == 0 && fanQuiet == false && fanTurbo == false)
-    {
-        return fan_modes::FAN_AUTO;
-    }
-    else if (fanSpeed1 == 1 && fanSpeed2 == 1 && fanQuiet == false && fanTurbo == false)
-    {
-        return fan_modes::FAN_LOW;
-    }
-    else if (fanSpeed1 == 1 && fanSpeed2 == 1 && fanQuiet == true  && fanTurbo == false)
-    {
-        return fan_modes::FAN_QUIET;
-    }
-    else if (fanSpeed1 == 3 && fanSpeed2 == 2 && fanQuiet == false && fanTurbo == false)
-    {
-        return fan_modes::FAN_MED;
-    }
-    else if (fanSpeed1 == 5 && fanSpeed2 == 3 && fanQuiet == false && fanTurbo == false)
-    {
-        return fan_modes::FAN_HIGH;
-    }
-    else if (fanSpeed1 == 5 && fanSpeed2 == 3 && fanQuiet == false && fanTurbo == true )
+
+    // Първо специалните режими
+    if (fanTurbo == true)
     {
         return fan_modes::FAN_TURBO;
     }
-    else 
+    else if (fanQuiet == true)
     {
-        ESP_LOGW(TAG, "Received unknown fan mode");
+        return fan_modes::FAN_QUIET;
+    }
+
+    // После нормалната скорост (само по fanSpeed2)
+    else if (fanSpeed2 == 0)
+    {
+        return fan_modes::FAN_AUTO;
+    }
+    else if (fanSpeed2 == 1)
+    {
+        return fan_modes::FAN_LOW;
+    }
+    else if (fanSpeed2 == 2)
+    {
+        return fan_modes::FAN_MED;
+    }
+    else if (fanSpeed2 == 3)
+    {
+        return fan_modes::FAN_HIGH;
+    }
+    else
+    {
+        ESP_LOGW(TAG, "Received unknown fan mode (fanSpeed1=%u fanSpeed2=%u quiet=%u turbo=%u)",
+                 fanSpeed1, fanSpeed2, (uint8_t)fanQuiet, (uint8_t)fanTurbo);
         return fan_modes::FAN_AUTO;
     }
 }
+
 
 std::string SinclairACCNT::determine_vertical_swing()
 {
