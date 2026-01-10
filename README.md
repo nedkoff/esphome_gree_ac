@@ -4,7 +4,7 @@ This generally replaces stock WiFi module, sometimes giving a little more advanc
 
 **USE AT YOUR OWN RISK!**
 
-** This fork is optimased for Gree GWH12RB-K3DNA3G/I(Viola) **
+** This fork is optimized for Gree GWH12RB-K3DNA3G/I(Viola) **
 
 Work is still in progress!
 
