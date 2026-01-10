@@ -25,7 +25,6 @@ SinclairACSelect = sinclair_ac_ns.class_(
 )
 
 
-CONF_HORIZONTAL_SWING_SELECT    = "horizontal_swing_select"
 CONF_VERTICAL_SWING_SELECT      = "vertical_swing_select"
 CONF_DISPLAY_SELECT             = "display_select"
 CONF_DISPLAY_UNIT_SELECT        = "display_unit_select"
@@ -37,15 +36,6 @@ CONF_SAVE_SWITCH                = "save_switch"
 
 CONF_CURRENT_TEMPERATURE_SENSOR = "current_temperature_sensor"
 
-HORIZONTAL_SWING_OPTIONS = [
-    "0 - OFF",
-    "1 - Swing - Full",
-    "2 - Constant - Left",
-    "3 - Constant - Mid-Left",
-    "4 - Constant - Middle",
-    "5 - Constant - Mid-Right",
-    "6 - Constant - Right",
-]
 
 
 VERTICAL_SWING_OPTIONS = [
@@ -85,7 +75,6 @@ select_schema = select.select_schema(select.Select).extend(
 
 SCHEMA = climate.climate_schema(climate.Climate).extend(
     {
-        cv.Optional(CONF_HORIZONTAL_SWING_SELECT): select_schema,
         cv.Optional(CONF_VERTICAL_SWING_SELECT): select_schema,
         cv.Optional(CONF_DISPLAY_SELECT): select_schema,
         cv.Optional(CONF_DISPLAY_UNIT_SELECT): select_schema,
@@ -112,12 +101,7 @@ async def to_code(config):
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
 
-    if CONF_HORIZONTAL_SWING_SELECT in config:
-        conf = config[CONF_HORIZONTAL_SWING_SELECT]
-        hswing_select = await select.new_select(conf, options=HORIZONTAL_SWING_OPTIONS)
-        await cg.register_component(hswing_select, conf)
-        cg.add(var.set_horizontal_swing_select(hswing_select))
-
+    
     if CONF_VERTICAL_SWING_SELECT in config:
         conf = config[CONF_VERTICAL_SWING_SELECT]
         vswing_select = await select.new_select(conf, options=VERTICAL_SWING_OPTIONS)
