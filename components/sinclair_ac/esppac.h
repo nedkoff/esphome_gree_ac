@@ -26,9 +26,7 @@ namespace fan_modes{
     const char* const FAN_AUTO  = "0 - Auto";
     const char* const FAN_QUIET = "1 - Quiet";
     const char* const FAN_LOW   = "2 - Low";
-    const char* const FAN_MEDL  = "3 - Medium-Low";
     const char* const FAN_MED   = "4 - Medium";
-    const char* const FAN_MEDH  = "5 - Medium-High";
     const char* const FAN_HIGH  = "6 - High";
     const char* const FAN_TURBO = "7 - Turbo";
 }
