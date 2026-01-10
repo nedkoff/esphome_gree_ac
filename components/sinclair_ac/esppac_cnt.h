@@ -170,6 +170,16 @@ class SinclairACCNT : public SinclairAC {
         std::string display_mode_internal_;
         bool display_power_internal_;
 
+        // --- ACK/Retry for DISPLAY (safe test) ---
+        bool pending_display_{false};
+        std::string pending_display_value_;
+        uint32_t pending_display_deadline_{0};
+        uint8_t pending_display_retries_{0};
+
+        static constexpr uint32_t PENDING_ACK_TIMEOUT_MS = 800;
+        static constexpr uint8_t  PENDING_MAX_RETRIES    = 2;
+
+
         bool processUnitReport();
 
         void send_packet();
