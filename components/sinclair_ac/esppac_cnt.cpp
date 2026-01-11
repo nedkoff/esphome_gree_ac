@@ -125,6 +125,7 @@ bool SinclairACCNT::match_pending_(const std::vector<uint8_t> &r) {
 
 void SinclairACCNT::setup() {
   SinclairAC::setup();
+  this->last_packet_received_ = millis();
   ESP_LOGD(TAG, "Using serial protocol for Sinclair AC");
 }
 
@@ -145,7 +146,8 @@ void SinclairACCNT::loop() {
       return;
     }
 
-    this->wait_response_ = false;
+    this->last_packet_received_ = millis();
+
     
     // --- PEEK REPORT for pending ACKs (do not change internal state) ---
     if (this->pending_mask_ && this->serialProcess_.data[3] == protocol::CMD_IN_UNIT_REPORT) {
