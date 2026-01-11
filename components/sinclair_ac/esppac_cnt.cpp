@@ -145,6 +145,8 @@ void SinclairACCNT::loop() {
       return;
     }
 
+    this->wait_response_ = false;
+    
     // --- PEEK REPORT for pending ACKs (do not change internal state) ---
     if (this->pending_mask_ && this->serialProcess_.data[3] == protocol::CMD_IN_UNIT_REPORT) {
       auto tmp = this->serialProcess_.data;
