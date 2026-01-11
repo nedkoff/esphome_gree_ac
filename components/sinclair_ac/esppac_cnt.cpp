@@ -26,6 +26,10 @@ void SinclairACCNT::clear_pending_(uint16_t mask) {
 
 bool SinclairACCNT::match_pending_(const std::vector<uint8_t> &r) {
   // r = payload after stripping (7E 7E LEN CMD) and checksum
+  if (r.size() < protocol::SET_PACKET_LEN) {
+    // report payload should be 45 bytes; if not, don't touch anything
+    return false;
+  }
 
   // MODE + POWER
   if (this->pending_mask_ & PEND_MODE_PWR) {
@@ -141,21 +145,17 @@ void SinclairACCNT::loop() {
       return;
     }
 
-    this->last_pet_received_ = millis(); /* Set the time at which we received our last pet */
-
     // --- PEEK REPORT for pending ACKs (do not change internal state) ---
     if (this->pending_mask_ && this->serialProcess_.data[3] == protocol::CMD_IN_UNIT_REPORT) {
       auto tmp = this->serialProcess_.data;
-
-      // strip header (7E 7E LEN CMD) and checksum, same idea as handle_packet()
-      tmp.erase(tmp.begin(), tmp.begin() + 4);
-      tmp.pop_back();
+      tmp.erase(tmp.begin(), tmp.begin() + 4);  // strip header
+      tmp.pop_back();                           // strip checksum
 
       uint16_t before = this->pending_mask_;
       this->match_pending_(tmp);
 
       if (before != this->pending_mask_) {
-        ESP_LOGD(TAG, "ACK progress: 0x%04X -> 0x%04X", before, this->pending_mask_);
+        ESP_LOGD(TAG, "ACK progress: 0x%04X -> 0x%04X", (unsigned) before, (unsigned) this->pending_mask_);
       }
     }
 
@@ -175,12 +175,13 @@ void SinclairACCNT::loop() {
   send_packet();
 
   // --- RETRY pending if no ACK in time ---
-  if (this->pending_mask_ && (int32_t)(millis() - this->pending_deadline_) >= 0) {
+  if (this->pending_mask_ && (int32_t) (millis() - this->pending_deadline_) >= 0) {
     if (this->pending_retries_ < PENDING_MAX_RETRIES) {
       this->pending_retries_++;
       this->pending_deadline_ = millis() + PENDING_ACK_TIMEOUT_MS;
 
-      ESP_LOGW(TAG, "ACK timeout, retry %u, pending_mask=0x%04X", this->pending_retries_, this->pending_mask_);
+      ESP_LOGW(TAG, "ACK timeout, retry %u, pending_mask=0x%04X",
+               (unsigned) this->pending_retries_, (unsigned) this->pending_mask_);
 
       // allow resend even if we were "waiting"
       this->wait_response_ = false;
@@ -188,7 +189,7 @@ void SinclairACCNT::loop() {
       // trigger resend of current desired state
       this->update_ = ACUpdate::UpdateStart;
     } else {
-      ESP_LOGW(TAG, "ACK failed after retries, giving up, pending_mask=0x%04X", this->pending_mask_);
+      ESP_LOGW(TAG, "ACK failed after retries, giving up, pending_mask=0x%04X", (unsigned) this->pending_mask_);
       this->pending_mask_ = 0;
     }
   }
@@ -219,48 +220,21 @@ void SinclairACCNT::control(const climate::ClimateCall &call) {
     uint8_t mode = protocol::REPORT_MODE_AUTO;
     bool power = false;
     switch (this->mode) {
-      case climate::CLIMATE_MODE_AUTO:
-        mode = protocol::REPORT_MODE_AUTO;
-        power = true;
-        break;
-      case climate::CLIMATE_MODE_COOL:
-        mode = protocol::REPORT_MODE_COOL;
-        power = true;
-        break;
-      case climate::CLIMATE_MODE_DRY:
-        mode = protocol::REPORT_MODE_DRY;
-        power = true;
-        break;
-      case climate::CLIMATE_MODE_FAN_ONLY:
-        mode = protocol::REPORT_MODE_FAN;
-        power = true;
-        break;
-      case climate::CLIMATE_MODE_HEAT:
-        mode = protocol::REPORT_MODE_HEAT;
-        power = true;
-        break;
+      case climate::CLIMATE_MODE_AUTO:     mode = protocol::REPORT_MODE_AUTO; power = true; break;
+      case climate::CLIMATE_MODE_COOL:     mode = protocol::REPORT_MODE_COOL; power = true; break;
+      case climate::CLIMATE_MODE_DRY:      mode = protocol::REPORT_MODE_DRY;  power = true; break;
+      case climate::CLIMATE_MODE_FAN_ONLY: mode = protocol::REPORT_MODE_FAN;  power = true; break;
+      case climate::CLIMATE_MODE_HEAT:     mode = protocol::REPORT_MODE_HEAT; power = true; break;
       default:
       case climate::CLIMATE_MODE_OFF:
         power = false;
         switch (this->mode_internal_) {
-          case climate::CLIMATE_MODE_AUTO:
-            mode = protocol::REPORT_MODE_AUTO;
-            break;
-          case climate::CLIMATE_MODE_COOL:
-            mode = protocol::REPORT_MODE_COOL;
-            break;
-          case climate::CLIMATE_MODE_DRY:
-            mode = protocol::REPORT_MODE_DRY;
-            break;
-          case climate::CLIMATE_MODE_FAN_ONLY:
-            mode = protocol::REPORT_MODE_FAN;
-            break;
-          case climate::CLIMATE_MODE_HEAT:
-            mode = protocol::REPORT_MODE_HEAT;
-            break;
-          default:
-            mode = protocol::REPORT_MODE_AUTO;
-            break;
+          case climate::CLIMATE_MODE_AUTO:     mode = protocol::REPORT_MODE_AUTO; break;
+          case climate::CLIMATE_MODE_COOL:     mode = protocol::REPORT_MODE_COOL; break;
+          case climate::CLIMATE_MODE_DRY:      mode = protocol::REPORT_MODE_DRY;  break;
+          case climate::CLIMATE_MODE_FAN_ONLY: mode = protocol::REPORT_MODE_FAN;  break;
+          case climate::CLIMATE_MODE_HEAT:     mode = protocol::REPORT_MODE_HEAT; break;
+          default:                             mode = protocol::REPORT_MODE_AUTO; break;
         }
         break;
     }
@@ -274,6 +248,7 @@ void SinclairACCNT::control(const climate::ClimateCall &call) {
     ESP_LOGV(TAG, "Requested target teperature change");
     this->update_ = ACUpdate::UpdateStart;
     this->target_temperature = *call.get_target_temperature();
+
     if (this->target_temperature < MIN_TEMPERATURE) {
       this->target_temperature = MIN_TEMPERATURE;
     } else if (this->target_temperature > MAX_TEMPERATURE) {
@@ -299,19 +274,12 @@ void SinclairACCNT::control(const climate::ClimateCall &call) {
     if (this->has_custom_fan_mode()) {
       const char *m = this->get_custom_fan_mode();
 
-      if (strcmp(m, fan_modes::FAN_AUTO) == 0) {
-        fanSpeed1 = 0; fanSpeed2 = 0; fanTurbo = false;
-      } else if (strcmp(m, fan_modes::FAN_LOW) == 0) {
-        fanSpeed1 = 1; fanSpeed2 = 1; fanTurbo = false;
-      } else if (strcmp(m, fan_modes::FAN_MED) == 0) {
-        fanSpeed1 = 3; fanSpeed2 = 2; fanTurbo = false;
-      } else if (strcmp(m, fan_modes::FAN_HIGH) == 0) {
-        fanSpeed1 = 5; fanSpeed2 = 3; fanTurbo = false;
-      } else if (strcmp(m, fan_modes::FAN_TURBO) == 0) {
-        fanSpeed1 = 5; fanSpeed2 = 3; fanTurbo = true;
-      } else {
-        fanSpeed1 = 0; fanSpeed2 = 0; fanTurbo = false;
-      }
+      if (strcmp(m, fan_modes::FAN_AUTO) == 0)        { fanSpeed1 = 0; fanSpeed2 = 0; fanTurbo = false; }
+      else if (strcmp(m, fan_modes::FAN_LOW) == 0)    { fanSpeed1 = 1; fanSpeed2 = 1; fanTurbo = false; }
+      else if (strcmp(m, fan_modes::FAN_MED) == 0)    { fanSpeed1 = 3; fanSpeed2 = 2; fanTurbo = false; }
+      else if (strcmp(m, fan_modes::FAN_HIGH) == 0)   { fanSpeed1 = 5; fanSpeed2 = 3; fanTurbo = false; }
+      else if (strcmp(m, fan_modes::FAN_TURBO) == 0)  { fanSpeed1 = 5; fanSpeed2 = 3; fanTurbo = true; }
+      else                                            { fanSpeed1 = 0; fanSpeed2 = 0; fanTurbo = false; }
     }
 
     this->pend_fan1_ = fanSpeed1;
@@ -326,28 +294,20 @@ void SinclairACCNT::control(const climate::ClimateCall &call) {
 
     switch (*call.get_swing_mode()) {
       case climate::CLIMATE_SWING_OFF:
-        /* both center */
         this->vertical_swing_state_ = vertical_swing_options::CMID;
         break;
       case climate::CLIMATE_SWING_VERTICAL:
         this->vertical_swing_state_ = vertical_swing_options::FULL;
         break;
       default:
-        ESP_LOGV(TAG, "Unsupported swing mode requested");
-        /* both center */
         this->vertical_swing_state_ = vertical_swing_options::CMID;
         break;
     }
 
-    // arm pending swing based on new state
     uint8_t vs = protocol::REPORT_VSWING_OFF;
-    if (this->vertical_swing_state_ == vertical_swing_options::FULL) {
-      vs = protocol::REPORT_VSWING_FULL;
-    } else if (this->vertical_swing_state_ == vertical_swing_options::CMID) {
-      vs = protocol::REPORT_VSWING_CMID;
-    } else {
-      vs = protocol::REPORT_VSWING_OFF;
-    }
+    if (this->vertical_swing_state_ == vertical_swing_options::FULL) vs = protocol::REPORT_VSWING_FULL;
+    else if (this->vertical_swing_state_ == vertical_swing_options::CMID) vs = protocol::REPORT_VSWING_CMID;
+    else vs = protocol::REPORT_VSWING_OFF;
 
     this->pend_vswing_ = vs;
     this->arm_pending_(PEND_VSWING);
@@ -359,18 +319,15 @@ void SinclairACCNT::control(const climate::ClimateCall &call) {
  */
 
 void SinclairACCNT::send_packet() {
-  std::vector<uint8_t> packet(protocol::SET_PACKET_LEN, 0); /* Initialize packet contents */
+  std::vector<uint8_t> packet(protocol::SET_PACKET_LEN, 0);
 
   if (this->wait_response_ == true && (millis() - this->last_packet_sent_) < protocol::TIME_REFRESH_PERIOD_MS) {
-    /* do not send packet too often or when we are waiting for report to come */
     return;
   }
 
-  packet[protocol::SET_CONST_02_BYTE] = protocol::SET_CONST_02_VAL; /* Some always 0x02 byte... */
-  packet[protocol::SET_CONST_BIT_BYTE] = protocol::SET_CONST_BIT_MASK; /* Some always true bit */
+  packet[protocol::SET_CONST_02_BYTE] = protocol::SET_CONST_02_VAL;
+  packet[protocol::SET_CONST_BIT_BYTE] = protocol::SET_CONST_BIT_MASK;
 
-  /* Prepare the rest of the frame */
-  /* this handles tricky part of 0xAF value and flag marking that WiFi does not apply any changes */
   switch (this->update_) {
     default:
     case ACUpdate::NoUpdate:
@@ -383,236 +340,135 @@ void SinclairACCNT::send_packet() {
       break;
   }
 
-  /* MODE and POWER --------------------------------------------------------------------------- */
+  // MODE and POWER
   uint8_t mode = protocol::REPORT_MODE_AUTO;
   bool power = false;
   switch (this->mode) {
-    case climate::CLIMATE_MODE_AUTO:
-      mode = protocol::REPORT_MODE_AUTO;
-      power = true;
-      break;
-    case climate::CLIMATE_MODE_COOL:
-      mode = protocol::REPORT_MODE_COOL;
-      power = true;
-      break;
-    case climate::CLIMATE_MODE_DRY:
-      mode = protocol::REPORT_MODE_DRY;
-      power = true;
-      break;
-    case climate::CLIMATE_MODE_FAN_ONLY:
-      mode = protocol::REPORT_MODE_FAN;
-      power = true;
-      break;
-    case climate::CLIMATE_MODE_HEAT:
-      mode = protocol::REPORT_MODE_HEAT;
-      power = true;
-      break;
+    case climate::CLIMATE_MODE_AUTO:     mode = protocol::REPORT_MODE_AUTO; power = true; break;
+    case climate::CLIMATE_MODE_COOL:     mode = protocol::REPORT_MODE_COOL; power = true; break;
+    case climate::CLIMATE_MODE_DRY:      mode = protocol::REPORT_MODE_DRY;  power = true; break;
+    case climate::CLIMATE_MODE_FAN_ONLY: mode = protocol::REPORT_MODE_FAN;  power = true; break;
+    case climate::CLIMATE_MODE_HEAT:     mode = protocol::REPORT_MODE_HEAT; power = true; break;
     default:
     case climate::CLIMATE_MODE_OFF:
-      /* In case of MODE_OFF we will not alter the last mode setting recieved from AC, see determine_mode() */
       switch (this->mode_internal_) {
-        case climate::CLIMATE_MODE_AUTO:
-          mode = protocol::REPORT_MODE_AUTO;
-          break;
-        case climate::CLIMATE_MODE_COOL:
-          mode = protocol::REPORT_MODE_COOL;
-          break;
-        case climate::CLIMATE_MODE_DRY:
-          mode = protocol::REPORT_MODE_DRY;
-          break;
-        case climate::CLIMATE_MODE_FAN_ONLY:
-          mode = protocol::REPORT_MODE_FAN;
-          break;
-        case climate::CLIMATE_MODE_HEAT:
-          mode = protocol::REPORT_MODE_HEAT;
-          break;
-        default:
-          mode = protocol::REPORT_MODE_AUTO;
-          break;
+        case climate::CLIMATE_MODE_AUTO:     mode = protocol::REPORT_MODE_AUTO; break;
+        case climate::CLIMATE_MODE_COOL:     mode = protocol::REPORT_MODE_COOL; break;
+        case climate::CLIMATE_MODE_DRY:      mode = protocol::REPORT_MODE_DRY;  break;
+        case climate::CLIMATE_MODE_FAN_ONLY: mode = protocol::REPORT_MODE_FAN;  break;
+        case climate::CLIMATE_MODE_HEAT:     mode = protocol::REPORT_MODE_HEAT; break;
+        default:                             mode = protocol::REPORT_MODE_AUTO; break;
       }
       power = false;
       break;
   }
 
   packet[protocol::REPORT_MODE_BYTE] |= (mode << protocol::REPORT_MODE_POS);
-  if (power) {
-    packet[protocol::REPORT_PWR_BYTE] |= protocol::REPORT_PWR_MASK;
-  }
+  if (power) packet[protocol::REPORT_PWR_BYTE] |= protocol::REPORT_PWR_MASK;
 
-  /* TARGET TEMPERATURE --------------------------------------------------------------------------- */
+  // TARGET TEMP
   uint8_t target_temperature =
       ((((uint8_t) this->target_temperature) - protocol::REPORT_TEMP_SET_OFF) << protocol::REPORT_TEMP_SET_POS);
   packet[protocol::REPORT_TEMP_SET_BYTE] |= (target_temperature & protocol::REPORT_TEMP_SET_MASK);
 
-  /* FAN SPEED --------------------------------------------------------------------------- */
-  uint8_t fanSpeed1 = 0;
-  uint8_t fanSpeed2 = 0;
+  // FAN
+  uint8_t fanSpeed1 = 0, fanSpeed2 = 0;
   bool fanTurbo = false;
   if (this->has_custom_fan_mode()) {
     const char *custom_fan_mode = this->get_custom_fan_mode();
-
-    if (strcmp(custom_fan_mode, fan_modes::FAN_AUTO) == 0) {
-      fanSpeed1 = 0;
-      fanSpeed2 = 0;
-      fanTurbo = false;
-    } else if (strcmp(custom_fan_mode, fan_modes::FAN_LOW) == 0) {
-      fanSpeed1 = 1;
-      fanSpeed2 = 1;
-      fanTurbo = false;
-    } else if (strcmp(custom_fan_mode, fan_modes::FAN_MED) == 0) {
-      fanSpeed1 = 3;
-      fanSpeed2 = 2;
-      fanTurbo = false;
-    } else if (strcmp(custom_fan_mode, fan_modes::FAN_HIGH) == 0) {
-      fanSpeed1 = 5;
-      fanSpeed2 = 3;
-      fanTurbo = false;
-    } else if (strcmp(custom_fan_mode, fan_modes::FAN_TURBO) == 0) {
-      fanSpeed1 = 5;
-      fanSpeed2 = 3;
-      fanTurbo = true;
-    } else {
-      fanSpeed1 = 0;
-      fanSpeed2 = 0;
-      fanTurbo = false;
-    }
+    if (strcmp(custom_fan_mode, fan_modes::FAN_AUTO) == 0)        { fanSpeed1 = 0; fanSpeed2 = 0; fanTurbo = false; }
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_LOW) == 0)    { fanSpeed1 = 1; fanSpeed2 = 1; fanTurbo = false; }
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_MED) == 0)    { fanSpeed1 = 3; fanSpeed2 = 2; fanTurbo = false; }
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_HIGH) == 0)   { fanSpeed1 = 5; fanSpeed2 = 3; fanTurbo = false; }
+    else if (strcmp(custom_fan_mode, fan_modes::FAN_TURBO) == 0)  { fanSpeed1 = 5; fanSpeed2 = 3; fanTurbo = true; }
+    else                                                          { fanSpeed1 = 0; fanSpeed2 = 0; fanTurbo = false; }
   }
 
   packet[protocol::REPORT_FAN_SPD1_BYTE] |= (fanSpeed1 << protocol::REPORT_FAN_SPD1_POS);
   packet[protocol::REPORT_FAN_SPD2_BYTE] |= (fanSpeed2 << protocol::REPORT_FAN_SPD2_POS);
-  if (fanTurbo) {
-    packet[protocol::REPORT_FAN_TURBO_BYTE] |= protocol::REPORT_FAN_TURBO_MASK;
-  }
+  if (fanTurbo) packet[protocol::REPORT_FAN_TURBO_BYTE] |= protocol::REPORT_FAN_TURBO_MASK;
 
-  /* VERTICAL SWING --------------------------------------------------------------------------- */
+  // VSWING
   uint8_t mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-  if (this->vertical_swing_state_ == vertical_swing_options::OFF) {
-    mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::FULL) {
-    mode_vertical_swing = protocol::REPORT_VSWING_FULL;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::DOWN) {
-    mode_vertical_swing = protocol::REPORT_VSWING_DOWN;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::MIDD) {
-    mode_vertical_swing = protocol::REPORT_VSWING_MIDD;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::MID) {
-    mode_vertical_swing = protocol::REPORT_VSWING_MID;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::MIDU) {
-    mode_vertical_swing = protocol::REPORT_VSWING_MIDU;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::UP) {
-    mode_vertical_swing = protocol::REPORT_VSWING_UP;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::CDOWN) {
-    mode_vertical_swing = protocol::REPORT_VSWING_CDOWN;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::CMIDD) {
-    mode_vertical_swing = protocol::REPORT_VSWING_CMIDD;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::CMID) {
-    mode_vertical_swing = protocol::REPORT_VSWING_CMID;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::CMIDU) {
-    mode_vertical_swing = protocol::REPORT_VSWING_CMIDU;
-  } else if (this->vertical_swing_state_ == vertical_swing_options::CUP) {
-    mode_vertical_swing = protocol::REPORT_VSWING_CUP;
-  } else {
-    mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-  }
+  if (this->vertical_swing_state_ == vertical_swing_options::OFF) mode_vertical_swing = protocol::REPORT_VSWING_OFF;
+  else if (this->vertical_swing_state_ == vertical_swing_options::FULL) mode_vertical_swing = protocol::REPORT_VSWING_FULL;
+  else if (this->vertical_swing_state_ == vertical_swing_options::DOWN) mode_vertical_swing = protocol::REPORT_VSWING_DOWN;
+  else if (this->vertical_swing_state_ == vertical_swing_options::MIDD) mode_vertical_swing = protocol::REPORT_VSWING_MIDD;
+  else if (this->vertical_swing_state_ == vertical_swing_options::MID) mode_vertical_swing = protocol::REPORT_VSWING_MID;
+  else if (this->vertical_swing_state_ == vertical_swing_options::MIDU) mode_vertical_swing = protocol::REPORT_VSWING_MIDU;
+  else if (this->vertical_swing_state_ == vertical_swing_options::UP) mode_vertical_swing = protocol::REPORT_VSWING_UP;
+  else if (this->vertical_swing_state_ == vertical_swing_options::CDOWN) mode_vertical_swing = protocol::REPORT_VSWING_CDOWN;
+  else if (this->vertical_swing_state_ == vertical_swing_options::CMIDD) mode_vertical_swing = protocol::REPORT_VSWING_CMIDD;
+  else if (this->vertical_swing_state_ == vertical_swing_options::CMID) mode_vertical_swing = protocol::REPORT_VSWING_CMID;
+  else if (this->vertical_swing_state_ == vertical_swing_options::CMIDU) mode_vertical_swing = protocol::REPORT_VSWING_CMIDU;
+  else if (this->vertical_swing_state_ == vertical_swing_options::CUP) mode_vertical_swing = protocol::REPORT_VSWING_CUP;
+  else mode_vertical_swing = protocol::REPORT_VSWING_OFF;
+
   packet[protocol::REPORT_VSWING_BYTE] |= (mode_vertical_swing << protocol::REPORT_VSWING_POS);
 
-  /* DISPLAY --------------------------------------------------------------------------- */
+  // DISPLAY
   uint8_t display_mode = protocol::REPORT_DISP_MODE_AUTO;
-  if (this->display_state_ == display_options::AUTO) {
-    display_mode = protocol::REPORT_DISP_MODE_AUTO;
-    this->display_power_internal_ = true;
-  } else if (this->display_state_ == display_options::SET) {
-    display_mode = protocol::REPORT_DISP_MODE_SET;
-    this->display_power_internal_ = true;
-  } else if (this->display_state_ == display_options::ACT) {
-    display_mode = protocol::REPORT_DISP_MODE_ACT;
-    this->display_power_internal_ = true;
-  } else if (this->display_state_ == display_options::OUT) {
-    display_mode = protocol::REPORT_DISP_MODE_OUT;
-    this->display_power_internal_ = true;
-  } else if (this->display_state_ == display_options::OFF) {
-    /* we do not want to alter display setting - only turn it off */
+  if (this->display_state_ == display_options::AUTO) { display_mode = protocol::REPORT_DISP_MODE_AUTO; this->display_power_internal_ = true; }
+  else if (this->display_state_ == display_options::SET) { display_mode = protocol::REPORT_DISP_MODE_SET; this->display_power_internal_ = true; }
+  else if (this->display_state_ == display_options::ACT) { display_mode = protocol::REPORT_DISP_MODE_ACT; this->display_power_internal_ = true; }
+  else if (this->display_state_ == display_options::OUT) { display_mode = protocol::REPORT_DISP_MODE_OUT; this->display_power_internal_ = true; }
+  else if (this->display_state_ == display_options::OFF) {
     this->display_power_internal_ = false;
-    if (this->display_mode_internal_ == display_options::AUTO) {
-      display_mode = protocol::REPORT_DISP_MODE_AUTO;
-    } else if (this->display_mode_internal_ == display_options::SET) {
-      display_mode = protocol::REPORT_DISP_MODE_SET;
-    } else if (this->display_mode_internal_ == display_options::ACT) {
-      display_mode = protocol::REPORT_DISP_MODE_ACT;
-    } else if (this->display_mode_internal_ == display_options::OUT) {
-      display_mode = protocol::REPORT_DISP_MODE_OUT;
-    } else {
-      display_mode = protocol::REPORT_DISP_MODE_AUTO;
-    }
+    if (this->display_mode_internal_ == display_options::SET) display_mode = protocol::REPORT_DISP_MODE_SET;
+    else if (this->display_mode_internal_ == display_options::ACT) display_mode = protocol::REPORT_DISP_MODE_ACT;
+    else if (this->display_mode_internal_ == display_options::OUT) display_mode = protocol::REPORT_DISP_MODE_OUT;
+    else display_mode = protocol::REPORT_DISP_MODE_AUTO;
   } else {
     display_mode = protocol::REPORT_DISP_MODE_AUTO;
     this->display_power_internal_ = true;
   }
 
   packet[protocol::REPORT_DISP_MODE_BYTE] |= (display_mode << protocol::REPORT_DISP_MODE_POS);
+  if (this->display_power_internal_) packet[protocol::REPORT_DISP_ON_BYTE] |= protocol::REPORT_DISP_ON_MASK;
 
-  if (this->display_power_internal_) {
-    packet[protocol::REPORT_DISP_ON_BYTE] |= protocol::REPORT_DISP_ON_MASK;
-  }
-
-  /* DISPLAY UNIT --------------------------------------------------------------------------- */
+  // DISPLAY UNIT
   if (this->display_unit_state_ == display_unit_options::DEGF) {
     packet[protocol::REPORT_DISP_F_BYTE] |= protocol::REPORT_DISP_F_MASK;
   }
 
-  /* PLASMA --------------------------------------------------------------------------- */
+  // PLASMA
   if (this->plasma_state_) {
     packet[protocol::REPORT_PLASMA1_BYTE] |= protocol::REPORT_PLASMA1_MASK;
     packet[protocol::REPORT_PLASMA2_BYTE] |= protocol::REPORT_PLASMA2_MASK;
   }
 
-  /* SLEEP --------------------------------------------------------------------------- */
-  if (this->sleep_state_) {
-    packet[protocol::REPORT_SLEEP_BYTE] |= protocol::REPORT_SLEEP_MASK;
-  }
+  // SLEEP
+  if (this->sleep_state_) packet[protocol::REPORT_SLEEP_BYTE] |= protocol::REPORT_SLEEP_MASK;
 
-  /* XFAN --------------------------------------------------------------------------- */
-  if (this->xfan_state_) {
-    packet[protocol::REPORT_XFAN_BYTE] |= protocol::REPORT_XFAN_MASK;
-  }
+  // XFAN
+  if (this->xfan_state_) packet[protocol::REPORT_XFAN_BYTE] |= protocol::REPORT_XFAN_MASK;
 
-  /* SAVE --------------------------------------------------------------------------- */
-  if (this->save_state_) {
-    packet[protocol::REPORT_SAVE_BYTE] |= protocol::REPORT_SAVE_MASK;
-  }
+  // SAVE
+  if (this->save_state_) packet[protocol::REPORT_SAVE_BYTE] |= protocol::REPORT_SAVE_MASK;
 
-  /* Do the command, length */
+  // Command + length
   packet.insert(packet.begin(), protocol::CMD_OUT_PARAMS_SET);
-  packet.insert(packet.begin(), protocol::SET_PACKET_LEN + 2); /* Add 2 bytes as we added a command and will add checksum */
+  packet.insert(packet.begin(), protocol::SET_PACKET_LEN + 2);
 
-  /* Do checksum - sum of all bytes except sync and checksum itself % 0x100 */
+  // checksum
   uint8_t checksum = 0;
-  for (uint8_t i = 0; i < packet.size(); i++) {
-    checksum += packet[i];
-  }
+  for (uint8_t i = 0; i < packet.size(); i++) checksum += packet[i];
   packet.push_back(checksum);
 
-  /* Do SYNC bytes */
+  // SYNC
   packet.insert(packet.begin(), protocol::SYNC);
   packet.insert(packet.begin(), protocol::SYNC);
 
-  this->last_packet_sent_ = millis();  /* Save the time when we sent the last packet */
+  this->last_packet_sent_ = millis();
   this->wait_response_ = true;
-  write_array(packet);                 /* Sent the packet by UART */
-  log_packet(packet, true);            /* Log uart for debug purposes */
+  write_array(packet);
+  log_packet(packet, true);
 
-  /* update setting state-machine */
   switch (this->update_) {
-    case ACUpdate::NoUpdate:
-      break;
-    case ACUpdate::UpdateStart:
-      this->update_ = ACUpdate::UpdateClear;
-      break;
-    case ACUpdate::UpdateClear:
-      this->update_ = ACUpdate::NoUpdate;
-      break;
-    default:
-      this->update_ = ACUpdate::NoUpdate;
-      break;
+    case ACUpdate::NoUpdate: break;
+    case ACUpdate::UpdateStart: this->update_ = ACUpdate::UpdateClear; break;
+    case ACUpdate::UpdateClear: this->update_ = ACUpdate::NoUpdate; break;
+    default: this->update_ = ACUpdate::NoUpdate; break;
   }
 }
 
@@ -621,16 +477,11 @@ void SinclairACCNT::send_packet() {
  */
 
 bool SinclairACCNT::verify_packet() {
-  /* At least 2 sync bytes + length + type + checksum */
   if (this->serialProcess_.data.size() < 5) {
     ESP_LOGW(TAG, "Dropping invalid packet (length)");
     return false;
   }
 
-  /* The header (aka sync bytes) was checked by SinclairAC::read_data() */
-  /* The frame len was assumed by SinclairAC::read_data() */
-
-  /* Check if this packet type should be processed */
   bool commandAllowed = false;
   for (uint8_t packet : allowedPackets) {
     if (this->serialProcess_.data[3] == packet) {
@@ -643,7 +494,6 @@ bool SinclairACCNT::verify_packet() {
     return false;
   }
 
-  /* Check checksum - sum of all bytes except sync and checksum itself % 0x100 */
   uint8_t checksum = 0;
   for (uint8_t i = 2; i < this->serialProcess_.data.size() - 1; i++) {
     checksum += this->serialProcess_.data[i];
@@ -658,10 +508,8 @@ bool SinclairACCNT::verify_packet() {
 
 void SinclairACCNT::handle_packet() {
   if (this->serialProcess_.data[3] == protocol::CMD_IN_UNIT_REPORT) {
-    /* here we will remove unnecessary elements - header and checksum */
-    this->serialProcess_.data.erase(this->serialProcess_.data.begin(), this->serialProcess_.data.begin() + 4); /* remove header */
-    this->serialProcess_.data.pop_back(); /* remove checksum */
-    /* now process the data */
+    this->serialProcess_.data.erase(this->serialProcess_.data.begin(), this->serialProcess_.data.begin() + 4);
+    this->serialProcess_.data.pop_back();
     this->processUnitReport();
     this->publish_state();
   } else {
@@ -670,7 +518,7 @@ void SinclairACCNT::handle_packet() {
 }
 
 /*
- * This decodes frame recieved from AC Unit
+ * This decodes frame received from AC Unit
  */
 bool SinclairACCNT::processUnitReport() {
   bool hasChanged = false;
@@ -694,7 +542,6 @@ bool SinclairACCNT::processUnitReport() {
   if (this->target_temperature != newTargetTemperature) hasChanged = true;
   this->update_target_temperature(newTargetTemperature);
 
-  /* if there is no external sensor mapped to represent current temperature we will get data from AC unit */
   if (this->current_temperature_sensor_ == nullptr) {
     float newCurrentTemperature =
         (float) (((this->serialProcess_.data[protocol::REPORT_TEMP_ACT_BYTE] & protocol::REPORT_TEMP_ACT_MASK) >>
@@ -706,7 +553,6 @@ bool SinclairACCNT::processUnitReport() {
   }
 
   std::string verticalSwing = determine_vertical_swing();
-
   this->update_swing_vertical(verticalSwing);
 
   climate::ClimateSwingMode newSwingMode;
@@ -731,37 +577,21 @@ bool SinclairACCNT::processUnitReport() {
 
 climate::ClimateMode SinclairACCNT::determine_mode() {
   uint8_t mode = (this->serialProcess_.data[protocol::REPORT_MODE_BYTE] & protocol::REPORT_MODE_MASK) >> protocol::REPORT_MODE_POS;
-
-  /* store power separately */
   this->power_internal_ = (this->serialProcess_.data[protocol::REPORT_PWR_BYTE] & protocol::REPORT_PWR_MASK) != 0;
 
   switch (mode) {
-    case protocol::REPORT_MODE_AUTO:
-      this->mode_internal_ = climate::CLIMATE_MODE_AUTO;
-      break;
-    case protocol::REPORT_MODE_COOL:
-      this->mode_internal_ = climate::CLIMATE_MODE_COOL;
-      break;
-    case protocol::REPORT_MODE_DRY:
-      this->mode_internal_ = climate::CLIMATE_MODE_DRY;
-      break;
-    case protocol::REPORT_MODE_FAN:
-      this->mode_internal_ = climate::CLIMATE_MODE_FAN_ONLY;
-      break;
-    case protocol::REPORT_MODE_HEAT:
-      this->mode_internal_ = climate::CLIMATE_MODE_HEAT;
-      break;
+    case protocol::REPORT_MODE_AUTO: this->mode_internal_ = climate::CLIMATE_MODE_AUTO; break;
+    case protocol::REPORT_MODE_COOL: this->mode_internal_ = climate::CLIMATE_MODE_COOL; break;
+    case protocol::REPORT_MODE_DRY:  this->mode_internal_ = climate::CLIMATE_MODE_DRY; break;
+    case protocol::REPORT_MODE_FAN:  this->mode_internal_ = climate::CLIMATE_MODE_FAN_ONLY; break;
+    case protocol::REPORT_MODE_HEAT: this->mode_internal_ = climate::CLIMATE_MODE_HEAT; break;
     default:
       ESP_LOGW(TAG, "Received unknown climate mode");
       this->mode_internal_ = climate::CLIMATE_MODE_OFF;
       break;
   }
 
-  if (this->power_internal_) {
-    return this->mode_internal_;
-  } else {
-    return climate::CLIMATE_MODE_OFF;
-  }
+  return this->power_internal_ ? this->mode_internal_ : climate::CLIMATE_MODE_OFF;
 }
 
 const char *SinclairACCNT::determine_fan_mode() {
@@ -769,51 +599,33 @@ const char *SinclairACCNT::determine_fan_mode() {
   uint8_t fanSpeed2 = (this->serialProcess_.data[protocol::REPORT_FAN_SPD2_BYTE] & protocol::REPORT_FAN_SPD2_MASK) >> protocol::REPORT_FAN_SPD2_POS;
   bool fanTurbo = (this->serialProcess_.data[protocol::REPORT_FAN_TURBO_BYTE] & protocol::REPORT_FAN_TURBO_MASK) != 0;
 
-  if (fanTurbo == true) {
-    return fan_modes::FAN_TURBO;
-  } else if (fanSpeed2 == 0) {
-    return fan_modes::FAN_AUTO;
-  } else if (fanSpeed2 == 1) {
-    return fan_modes::FAN_LOW;
-  } else if (fanSpeed2 == 2) {
-    return fan_modes::FAN_MED;
-  } else if (fanSpeed2 == 3) {
-    return fan_modes::FAN_HIGH;
-  } else {
-    ESP_LOGW(TAG, "Received unknown fan mode (fanSpeed1=%u fanSpeed2=%u turbo=%u)",
-             fanSpeed1, fanSpeed2, (uint8_t) fanTurbo);
-    return fan_modes::FAN_AUTO;
-  }
+  if (fanTurbo) return fan_modes::FAN_TURBO;
+  if (fanSpeed2 == 0) return fan_modes::FAN_AUTO;
+  if (fanSpeed2 == 1) return fan_modes::FAN_LOW;
+  if (fanSpeed2 == 2) return fan_modes::FAN_MED;
+  if (fanSpeed2 == 3) return fan_modes::FAN_HIGH;
+
+  ESP_LOGW(TAG, "Received unknown fan mode (fanSpeed1=%u fanSpeed2=%u turbo=%u)",
+           fanSpeed1, fanSpeed2, (uint8_t) fanTurbo);
+  return fan_modes::FAN_AUTO;
 }
 
 std::string SinclairACCNT::determine_vertical_swing() {
   uint8_t mode = (this->serialProcess_.data[protocol::REPORT_VSWING_BYTE] & protocol::REPORT_VSWING_MASK) >> protocol::REPORT_VSWING_POS;
 
   switch (mode) {
-    case protocol::REPORT_VSWING_OFF:
-      return vertical_swing_options::OFF;
-    case protocol::REPORT_VSWING_FULL:
-      return vertical_swing_options::FULL;
-    case protocol::REPORT_VSWING_DOWN:
-      return vertical_swing_options::DOWN;
-    case protocol::REPORT_VSWING_MIDD:
-      return vertical_swing_options::MIDD;
-    case protocol::REPORT_VSWING_MID:
-      return vertical_swing_options::MID;
-    case protocol::REPORT_VSWING_MIDU:
-      return vertical_swing_options::MIDU;
-    case protocol::REPORT_VSWING_UP:
-      return vertical_swing_options::UP;
-    case protocol::REPORT_VSWING_CDOWN:
-      return vertical_swing_options::CDOWN;
-    case protocol::REPORT_VSWING_CMIDD:
-      return vertical_swing_options::CMIDD;
-    case protocol::REPORT_VSWING_CMID:
-      return vertical_swing_options::CMID;
-    case protocol::REPORT_VSWING_CMIDU:
-      return vertical_swing_options::CMIDU;
-    case protocol::REPORT_VSWING_CUP:
-      return vertical_swing_options::CUP;
+    case protocol::REPORT_VSWING_OFF:   return vertical_swing_options::OFF;
+    case protocol::REPORT_VSWING_FULL:  return vertical_swing_options::FULL;
+    case protocol::REPORT_VSWING_DOWN:  return vertical_swing_options::DOWN;
+    case protocol::REPORT_VSWING_MIDD:  return vertical_swing_options::MIDD;
+    case protocol::REPORT_VSWING_MID:   return vertical_swing_options::MID;
+    case protocol::REPORT_VSWING_MIDU:  return vertical_swing_options::MIDU;
+    case protocol::REPORT_VSWING_UP:    return vertical_swing_options::UP;
+    case protocol::REPORT_VSWING_CDOWN: return vertical_swing_options::CDOWN;
+    case protocol::REPORT_VSWING_CMIDD: return vertical_swing_options::CMIDD;
+    case protocol::REPORT_VSWING_CMID:  return vertical_swing_options::CMID;
+    case protocol::REPORT_VSWING_CMIDU: return vertical_swing_options::CMIDU;
+    case protocol::REPORT_VSWING_CUP:   return vertical_swing_options::CUP;
     default:
       ESP_LOGW(TAG, "Received unknown vertical swing mode");
       return vertical_swing_options::OFF;
@@ -822,41 +634,26 @@ std::string SinclairACCNT::determine_vertical_swing() {
 
 std::string SinclairACCNT::determine_display() {
   uint8_t mode = (this->serialProcess_.data[protocol::REPORT_DISP_MODE_BYTE] & protocol::REPORT_DISP_MODE_MASK) >> protocol::REPORT_DISP_MODE_POS;
-
   this->display_power_internal_ = (this->serialProcess_.data[protocol::REPORT_DISP_ON_BYTE] & protocol::REPORT_DISP_ON_MASK);
 
   switch (mode) {
-    case protocol::REPORT_DISP_MODE_AUTO:
-      this->display_mode_internal_ = display_options::AUTO;
-      break;
-    case protocol::REPORT_DISP_MODE_SET:
-      this->display_mode_internal_ = display_options::SET;
-      break;
-    case protocol::REPORT_DISP_MODE_ACT:
-      this->display_mode_internal_ = display_options::ACT;
-      break;
-    case protocol::REPORT_DISP_MODE_OUT:
-      this->display_mode_internal_ = display_options::OUT;
-      break;
+    case protocol::REPORT_DISP_MODE_AUTO: this->display_mode_internal_ = display_options::AUTO; break;
+    case protocol::REPORT_DISP_MODE_SET:  this->display_mode_internal_ = display_options::SET; break;
+    case protocol::REPORT_DISP_MODE_ACT:  this->display_mode_internal_ = display_options::ACT; break;
+    case protocol::REPORT_DISP_MODE_OUT:  this->display_mode_internal_ = display_options::OUT; break;
     default:
       ESP_LOGW(TAG, "Received unknown display mode");
       this->display_mode_internal_ = display_options::AUTO;
       break;
   }
 
-  if (this->display_power_internal_) {
-    return this->display_mode_internal_;
-  } else {
-    return display_options::OFF;
-  }
+  return this->display_power_internal_ ? this->display_mode_internal_ : display_options::OFF;
 }
 
 std::string SinclairACCNT::determine_display_unit() {
-  if (this->serialProcess_.data[protocol::REPORT_DISP_F_BYTE] & protocol::REPORT_DISP_F_MASK) {
+  if (this->serialProcess_.data[protocol::REPORT_DISP_F_BYTE] & protocol::REPORT_DISP_F_MASK)
     return display_unit_options::DEGF;
-  } else {
-    return display_unit_options::DEGC;
-  }
+  return display_unit_options::DEGC;
 }
 
 bool SinclairACCNT::determine_plasma() {
@@ -866,23 +663,20 @@ bool SinclairACCNT::determine_plasma() {
 }
 
 bool SinclairACCNT::determine_sleep() { return (this->serialProcess_.data[protocol::REPORT_SLEEP_BYTE] & protocol::REPORT_SLEEP_MASK) != 0; }
-bool SinclairACCNT::determine_xfan() { return (this->serialProcess_.data[protocol::REPORT_XFAN_BYTE] & protocol::REPORT_XFAN_MASK) != 0; }
-bool SinclairACCNT::determine_save() { return (this->serialProcess_.data[protocol::REPORT_SAVE_BYTE] & protocol::REPORT_SAVE_MASK) != 0; }
+bool SinclairACCNT::determine_xfan()  { return (this->serialProcess_.data[protocol::REPORT_XFAN_BYTE] & protocol::REPORT_XFAN_MASK) != 0; }
+bool SinclairACCNT::determine_save()  { return (this->serialProcess_.data[protocol::REPORT_SAVE_BYTE] & protocol::REPORT_SAVE_MASK) != 0; }
 
 /*
  * Sensor handling
  */
 
 void SinclairACCNT::on_vertical_swing_change(const std::string &swing) {
-  if (this->state_ != ACState::Ready)
-    return;
+  if (this->state_ != ACState::Ready) return;
 
   ESP_LOGD(TAG, "Setting vertical swing position");
-
   this->update_ = ACUpdate::UpdateStart;
   this->vertical_swing_state_ = swing;
 
-  // arm pending swing based on new state
   uint8_t vs = protocol::REPORT_VSWING_OFF;
   if (swing == vertical_swing_options::OFF) vs = protocol::REPORT_VSWING_OFF;
   else if (swing == vertical_swing_options::FULL) vs = protocol::REPORT_VSWING_FULL;
@@ -902,26 +696,20 @@ void SinclairACCNT::on_vertical_swing_change(const std::string &swing) {
 }
 
 void SinclairACCNT::on_display_change(const std::string &display) {
-  if (this->state_ != ACState::Ready)
-    return;
+  if (this->state_ != ACState::Ready) return;
 
   ESP_LOGD(TAG, "Setting display mode");
-
   this->update_ = ACUpdate::UpdateStart;
   this->display_state_ = display;
 
-  // desired display -> protocol expectations
   if (display == display_options::OFF) {
     this->pend_disp_on_ = false;
-
-    // keep last internal mode (as send_packet does)
     if (this->display_mode_internal_ == display_options::SET) this->pend_disp_mode_ = protocol::REPORT_DISP_MODE_SET;
     else if (this->display_mode_internal_ == display_options::ACT) this->pend_disp_mode_ = protocol::REPORT_DISP_MODE_ACT;
     else if (this->display_mode_internal_ == display_options::OUT) this->pend_disp_mode_ = protocol::REPORT_DISP_MODE_OUT;
     else this->pend_disp_mode_ = protocol::REPORT_DISP_MODE_AUTO;
   } else {
     this->pend_disp_on_ = true;
-
     if (display == display_options::SET) this->pend_disp_mode_ = protocol::REPORT_DISP_MODE_SET;
     else if (display == display_options::ACT) this->pend_disp_mode_ = protocol::REPORT_DISP_MODE_ACT;
     else if (display == display_options::OUT) this->pend_disp_mode_ = protocol::REPORT_DISP_MODE_OUT;
@@ -932,11 +720,9 @@ void SinclairACCNT::on_display_change(const std::string &display) {
 }
 
 void SinclairACCNT::on_display_unit_change(const std::string &display_unit) {
-  if (this->state_ != ACState::Ready)
-    return;
+  if (this->state_ != ACState::Ready) return;
 
   ESP_LOGD(TAG, "Setting display unit");
-
   this->update_ = ACUpdate::UpdateStart;
   this->display_unit_state_ = display_unit;
 
@@ -945,11 +731,9 @@ void SinclairACCNT::on_display_unit_change(const std::string &display_unit) {
 }
 
 void SinclairACCNT::on_plasma_change(bool plasma) {
-  if (this->state_ != ACState::Ready)
-    return;
+  if (this->state_ != ACState::Ready) return;
 
   ESP_LOGD(TAG, "Setting plasma");
-
   this->update_ = ACUpdate::UpdateStart;
   this->plasma_state_ = plasma;
 
@@ -958,11 +742,9 @@ void SinclairACCNT::on_plasma_change(bool plasma) {
 }
 
 void SinclairACCNT::on_sleep_change(bool sleep) {
-  if (this->state_ != ACState::Ready)
-    return;
+  if (this->state_ != ACState::Ready) return;
 
   ESP_LOGD(TAG, "Setting sleep");
-
   this->update_ = ACUpdate::UpdateStart;
   this->sleep_state_ = sleep;
 
@@ -971,11 +753,9 @@ void SinclairACCNT::on_sleep_change(bool sleep) {
 }
 
 void SinclairACCNT::on_xfan_change(bool xfan) {
-  if (this->state_ != ACState::Ready)
-    return;
+  if (this->state_ != ACState::Ready) return;
 
   ESP_LOGD(TAG, "Setting xfan");
-
   this->update_ = ACUpdate::UpdateStart;
   this->xfan_state_ = xfan;
 
@@ -984,11 +764,9 @@ void SinclairACCNT::on_xfan_change(bool xfan) {
 }
 
 void SinclairACCNT::on_save_change(bool save) {
-  if (this->state_ != ACState::Ready)
-    return;
+  if (this->state_ != ACState::Ready) return;
 
   ESP_LOGD(TAG, "Setting save");
-
   this->update_ = ACUpdate::UpdateStart;
   this->save_state_ = save;
 
