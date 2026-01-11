@@ -23,8 +23,8 @@ static const float TEMPERATURE_TOLERANCE = 2;  // The tolerance to allow when ch
 static const uint8_t TEMPERATURE_THRESHOLD = 100;  // Maximum temperature the AC can report (formally 119.5 for sinclair protocol, but 100 is impossible, soo...)
 
 namespace fan_modes{
-    const char* const FAN_AUTO  = "Auto";
-    const char* const FAN_LOW   = "Low";
+    const char* const FAN_AUTO  = "0 - Auto";
+    const char* const FAN_LOW   = "1 - Low";
     const char* const FAN_MED   = "Medium";
     const char* const FAN_HIGH  = "High";
     const char* const FAN_TURBO = "Turbo";
