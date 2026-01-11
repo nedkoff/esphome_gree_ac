@@ -25,8 +25,8 @@ static const uint8_t TEMPERATURE_THRESHOLD = 100;  // Maximum temperature the AC
 namespace fan_modes{
     const char* const FAN_AUTO  = "0 - Auto";
     const char* const FAN_LOW   = "1 - Low";
-    const char* const FAN_MED   = "Medium";
-    const char* const FAN_HIGH  = "High";
+    const char* const FAN_MED   = "2 - Medium";
+    const char* const FAN_HIGH  = "3 - High";
     const char* const FAN_TURBO = "Turbo";
 }
 
