@@ -570,8 +570,15 @@ bool SinclairACCNT::processUnitReport() {
   if (this->swing_mode != newSwingMode) hasChanged = true;
   this->swing_mode = newSwingMode;
 
-  this->update_display(determine_display());
-  this->update_display_unit(determine_display_unit());
+  // Don't override user-requested display changes while waiting for ACK
+  if (!(this->pending_mask_ & PEND_DISPLAY)) {
+    this->update_display(determine_display());
+  }
+
+  if (!(this->pending_mask_ & PEND_DISP_UNIT)) {
+    this->update_display_unit(determine_display_unit());
+  }
+
 
   this->update_plasma(determine_plasma());
   this->update_sleep(determine_sleep());
