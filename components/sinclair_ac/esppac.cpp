@@ -33,6 +33,8 @@ void SinclairAC::setup()
   // Initialize times
     this->init_time_ = millis();
     this->last_packet_sent_ = millis();
+    this->last_packet_received_ = millis();
+    this->wait_response_ = false;
 
     ESP_LOGI(TAG, "Sinclair AC component v%s starting...", VERSION);
 }
