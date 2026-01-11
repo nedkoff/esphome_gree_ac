@@ -49,15 +49,18 @@ bool SinclairACCNT::match_pending_(const std::vector<uint8_t> &r) {
   }
 
   // FAN
-  if (this->pending_mask_ & PEND_FAN) {
-    uint8_t f1 = (r[protocol::REPORT_FAN_SPD1_BYTE] & protocol::REPORT_FAN_SPD1_MASK) >> protocol::REPORT_FAN_SPD1_POS;
-    uint8_t f2 = (r[protocol::REPORT_FAN_SPD2_BYTE] & protocol::REPORT_FAN_SPD2_MASK) >> protocol::REPORT_FAN_SPD2_POS;
-    bool turbo = (r[protocol::REPORT_FAN_TURBO_BYTE] & protocol::REPORT_FAN_TURBO_MASK) != 0;
+  // FAN
+if (this->pending_mask_ & PEND_FAN) {
+  // NOTE: on some Sinclair variants SPD1 is not reliably reported back,
+  // so we ACK fan changes using SPD2 + TURBO only.
+  uint8_t f2 = (r[protocol::REPORT_FAN_SPD2_BYTE] & protocol::REPORT_FAN_SPD2_MASK) >> protocol::REPORT_FAN_SPD2_POS;
+  bool turbo = (r[protocol::REPORT_FAN_TURBO_BYTE] & protocol::REPORT_FAN_TURBO_MASK) != 0;
 
-    if (f1 == this->pend_fan1_ && f2 == this->pend_fan2_ && turbo == this->pend_turbo_) {
-      this->clear_pending_(PEND_FAN);
-    }
+  if (f2 == this->pend_fan2_ && turbo == this->pend_turbo_) {
+    this->clear_pending_(PEND_FAN);
   }
+}
+
 
   // VSWING
   if (this->pending_mask_ & PEND_VSWING) {
