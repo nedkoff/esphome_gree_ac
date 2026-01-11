@@ -125,7 +125,6 @@ bool SinclairACCNT::match_pending_(const std::vector<uint8_t> &r) {
 
 void SinclairACCNT::setup() {
   SinclairAC::setup();
-  this->last_packet_received_ = millis();
   ESP_LOGD(TAG, "Using serial protocol for Sinclair AC");
 }
 
