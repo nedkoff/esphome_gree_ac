@@ -521,25 +521,36 @@ void SinclairACCNT::handle_packet() {
 bool SinclairACCNT::processUnitReport() {
   bool hasChanged = false;
 
-  climate::ClimateMode newMode = determine_mode();
-  if (this->mode != newMode) hasChanged = true;
-  this->mode = newMode;
-
-  const char *newFanMode = determine_fan_mode();
-  if (this->has_custom_fan_mode()) {
-    if (strcmp(this->get_custom_fan_mode(), newFanMode) != 0) hasChanged = true;
-  } else {
-    hasChanged = true;
+  // ----- MODE / POWER -----
+  climate::ClimateMode reportedMode = determine_mode(); // обновява mode_internal_ + power_internal_
+  if (!(this->pending_mask_ & PEND_MODE_PWR)) {
+    if (this->mode != reportedMode) hasChanged = true;
+    this->mode = reportedMode;
   }
-  this->set_custom_fan_mode_(newFanMode);
 
-  float newTargetTemperature =
+  // ----- FAN -----
+  const char *reportedFanMode = determine_fan_mode();
+  if (!(this->pending_mask_ & PEND_FAN)) {
+    if (this->has_custom_fan_mode()) {
+      if (strcmp(this->get_custom_fan_mode(), reportedFanMode) != 0) hasChanged = true;
+    } else {
+      hasChanged = true;
+    }
+    this->set_custom_fan_mode_(reportedFanMode);
+  }
+
+  // ----- TARGET TEMP -----
+  float reportedTargetTemperature =
       (float) (((this->serialProcess_.data[protocol::REPORT_TEMP_SET_BYTE] & protocol::REPORT_TEMP_SET_MASK) >>
                 protocol::REPORT_TEMP_SET_POS) +
                protocol::REPORT_TEMP_SET_OFF);
-  if (this->target_temperature != newTargetTemperature) hasChanged = true;
-  this->update_target_temperature(newTargetTemperature);
 
+  if (!(this->pending_mask_ & PEND_TEMP)) {
+    if (this->target_temperature != reportedTargetTemperature) hasChanged = true;
+    this->update_target_temperature(reportedTargetTemperature);
+  }
+
+  // ----- CURRENT TEMP (това винаги може да се обновява) -----
   if (this->current_temperature_sensor_ == nullptr) {
     float newCurrentTemperature =
         (float) (((this->serialProcess_.data[protocol::REPORT_TEMP_ACT_BYTE] & protocol::REPORT_TEMP_ACT_MASK) >>
@@ -550,35 +561,39 @@ bool SinclairACCNT::processUnitReport() {
     this->update_current_temperature(newCurrentTemperature);
   }
 
-  std::string verticalSwing = determine_vertical_swing();
-  this->update_swing_vertical(verticalSwing);
+  // ----- VSWING / SWING MODE -----
+  std::string reportedVerticalSwing = determine_vertical_swing();
+  if (!(this->pending_mask_ & PEND_VSWING)) {
+    this->update_swing_vertical(reportedVerticalSwing);
 
-  climate::ClimateSwingMode newSwingMode;
-  if (verticalSwing == vertical_swing_options::FULL)
-    newSwingMode = climate::CLIMATE_SWING_VERTICAL;
-  else
-    newSwingMode = climate::CLIMATE_SWING_OFF;
+    climate::ClimateSwingMode newSwingMode =
+        (reportedVerticalSwing == vertical_swing_options::FULL)
+          ? climate::CLIMATE_SWING_VERTICAL
+          : climate::CLIMATE_SWING_OFF;
 
-  if (this->swing_mode != newSwingMode) hasChanged = true;
-  this->swing_mode = newSwingMode;
+    if (this->swing_mode != newSwingMode) hasChanged = true;
+    this->swing_mode = newSwingMode;
+  }
 
-  // Don't override user-requested display changes while waiting for ACK
+  // ----- DISPLAY -----
   if (!(this->pending_mask_ & PEND_DISPLAY)) {
     this->update_display(determine_display());
   }
 
+  // ----- DISPLAY UNIT -----
   if (!(this->pending_mask_ & PEND_DISP_UNIT)) {
     this->update_display_unit(determine_display_unit());
   }
 
-
-  this->update_plasma(determine_plasma());
-  this->update_sleep(determine_sleep());
-  this->update_xfan(determine_xfan());
-  this->update_save(determine_save());
+  // ----- PLASMA / SLEEP / XFAN / SAVE -----
+  if (!(this->pending_mask_ & PEND_PLASMA)) this->update_plasma(determine_plasma());
+  if (!(this->pending_mask_ & PEND_SLEEP))  this->update_sleep(determine_sleep());
+  if (!(this->pending_mask_ & PEND_XFAN))   this->update_xfan(determine_xfan());
+  if (!(this->pending_mask_ & PEND_SAVE))   this->update_save(determine_save());
 
   return hasChanged;
 }
+
 
 climate::ClimateMode SinclairACCNT::determine_mode() {
   uint8_t mode = (this->serialProcess_.data[protocol::REPORT_MODE_BYTE] & protocol::REPORT_MODE_MASK) >> protocol::REPORT_MODE_POS;
