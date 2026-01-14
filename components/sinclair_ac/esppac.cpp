@@ -130,7 +130,7 @@ void SinclairAC::update_target_temperature(float temperature)
 }
 
 
-void SinclairAC::update_swing_vertical(const std::string &swing)
+void SinclairAC::update__vertical(const std::string &)
 {
     this->vertical_swing_state_ = swing;
 
