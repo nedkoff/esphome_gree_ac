@@ -49,7 +49,6 @@ bool SinclairACCNT::match_pending_(const std::vector<uint8_t> &r) {
   }
 
   // FAN
-  // FAN
 if (this->pending_mask_ & PEND_FAN) {
   // NOTE: on some Sinclair variants SPD1 is not reliably reported back,
   // so we ACK fan changes using SPD2 + TURBO only.
