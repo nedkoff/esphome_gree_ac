@@ -295,29 +295,31 @@ void SinclairACCNT::control(const climate::ClimateCall &call) {
   }
 
   if (call.get_swing_mode().has_value()) {
-    ESP_LOGV(TAG, "Requested swing mode change");
-    this->update_ = ACUpdate::UpdateStart;
+  ESP_LOGV(TAG, "Requested swing mode change");
+  this->update_ = ACUpdate::UpdateStart;
 
-    switch (*call.get_swing_mode()) {
-      case climate::CLIMATE_SWING_OFF:
-        this->vertical_swing_state_ = vertical_swing_options::CMID;
-        break;
-      case climate::CLIMATE_SWING_VERTICAL:
-        this->vertical_swing_state_ = vertical_swing_options::FULL;
-        break;
-      default:
-        this->vertical_swing_state_ = vertical_swing_options::CMID;
-        break;
-    }
+  switch (*call.get_swing_mode()) {
+    case climate::CLIMATE_SWING_OFF:
+      this->vertical_swing_state_ = vertical_swing_options::OFF;
+      break;
 
-    uint8_t vs = protocol::REPORT_VSWING_OFF;
-    if (this->vertical_swing_state_ == vertical_swing_options::FULL) vs = protocol::REPORT_VSWING_FULL;
-    else if (this->vertical_swing_state_ == vertical_swing_options::CMID) vs = protocol::REPORT_VSWING_CMID;
-    else vs = protocol::REPORT_VSWING_OFF;
+    case climate::CLIMATE_SWING_VERTICAL:
+      this->vertical_swing_state_ = vertical_swing_options::FULL;
+      break;
 
-    this->pend_vswing_ = vs;
-    this->arm_pending_(PEND_VSWING);
+    default:
+      this->vertical_swing_state_ = vertical_swing_options::OFF;
+      break;
   }
+
+  uint8_t vs = protocol::REPORT_VSWING_OFF;
+  if (this->vertical_swing_state_ == vertical_swing_options::FULL)
+    vs = protocol::REPORT_VSWING_FULL;
+
+  this->pend_vswing_ = vs;
+  this->arm_pending_(PEND_VSWING);
+}
+
 }
 
 /*
