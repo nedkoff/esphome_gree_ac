@@ -396,7 +396,8 @@ void SinclairACCNT::send_packet() {
 
   // VSWING
   uint8_t mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-  if (this->vertical_swing_state_ == vertical_swing_options::FULL) { mode_vertical_swing = protocol::REPORT_VSWING_FULL;}
+  if (this->vertical_swing_state_ == vertical_swing_options::OFF) { mode_vertical_swing = protocol::REPORT_VSWING_OFF; }
+  else if (this->vertical_swing_state_ == vertical_swing_options::FULL) { mode_vertical_swing = protocol::REPORT_VSWING_FULL; }
   else { mode_vertical_swing = protocol::REPORT_VSWING_OFF; }
 
 
