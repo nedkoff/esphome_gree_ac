@@ -396,19 +396,9 @@ void SinclairACCNT::send_packet() {
 
   // VSWING
   uint8_t mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-  if (this->vertical_swing_state_ == vertical_swing_options::OFF) mode_vertical_swing = protocol::REPORT_VSWING_OFF;
-  else if (this->vertical_swing_state_ == vertical_swing_options::FULL) mode_vertical_swing = protocol::REPORT_VSWING_FULL;
-  else if (this->vertical_swing_state_ == vertical_swing_options::DOWN) mode_vertical_swing = protocol::REPORT_VSWING_DOWN;
-  else if (this->vertical_swing_state_ == vertical_swing_options::MIDD) mode_vertical_swing = protocol::REPORT_VSWING_MIDD;
-  else if (this->vertical_swing_state_ == vertical_swing_options::MID) mode_vertical_swing = protocol::REPORT_VSWING_MID;
-  else if (this->vertical_swing_state_ == vertical_swing_options::MIDU) mode_vertical_swing = protocol::REPORT_VSWING_MIDU;
-  else if (this->vertical_swing_state_ == vertical_swing_options::UP) mode_vertical_swing = protocol::REPORT_VSWING_UP;
-  else if (this->vertical_swing_state_ == vertical_swing_options::CDOWN) mode_vertical_swing = protocol::REPORT_VSWING_CDOWN;
-  else if (this->vertical_swing_state_ == vertical_swing_options::CMIDD) mode_vertical_swing = protocol::REPORT_VSWING_CMIDD;
-  else if (this->vertical_swing_state_ == vertical_swing_options::CMID) mode_vertical_swing = protocol::REPORT_VSWING_CMID;
-  else if (this->vertical_swing_state_ == vertical_swing_options::CMIDU) mode_vertical_swing = protocol::REPORT_VSWING_CMIDU;
-  else if (this->vertical_swing_state_ == vertical_swing_options::CUP) mode_vertical_swing = protocol::REPORT_VSWING_CUP;
-  else mode_vertical_swing = protocol::REPORT_VSWING_OFF;
+  if (this->vertical_swing_state_ == vertical_swing_options::FULL) { mode_vertical_swing = protocol::REPORT_VSWING_FULL;}
+  else { mode_vertical_swing = protocol::REPORT_VSWING_OFF; }
+
 
   packet[protocol::REPORT_VSWING_BYTE] |= (mode_vertical_swing << protocol::REPORT_VSWING_POS);
 
