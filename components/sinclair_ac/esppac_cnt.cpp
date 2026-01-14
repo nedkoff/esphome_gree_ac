@@ -189,7 +189,7 @@ void SinclairACCNT::loop() {
                (unsigned) this->pending_retries_, (unsigned) this->pending_mask_);
 
       // allow resend even if we were "waiting"
-      this->wait_response_ = false;
+      //this->wait_response_ = false;
 
       // trigger resend of current desired state
       this->update_ = ACUpdate::UpdateStart;
