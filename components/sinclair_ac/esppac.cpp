@@ -130,18 +130,18 @@ void SinclairAC::update_target_temperature(float temperature)
 }
 
 
-void SinclairAC::update__vertical(const std::string &)
+void SinclairAC::update_vertical(const std::string &swing)
 {
     this->vertical_swing_state_ = swing;
 
     if (this->vertical_swing_select_ != nullptr) {
-        const char *current = this->vertical_swing_select_->current_option();  // може да е nullptr
-
+        const char *current = this->vertical_swing_select_->current_option();
         if (current == nullptr || this->vertical_swing_state_ != current) {
             this->vertical_swing_select_->publish_state(this->vertical_swing_state_);
         }
     }
 }
+
 
 void SinclairAC::update_display(const std::string &display)
 {
