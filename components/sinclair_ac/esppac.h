@@ -35,16 +35,6 @@ namespace fan_modes{
 namespace vertical_swing_options{
     const std::string OFF   = "00 - OFF";
     const std::string FULL  = "01 - Swing - Full";
-    const std::string DOWN  = "02 - Swing - Down";
-    const std::string MIDD  = "03 - Swing - Mid-Down";
-    const std::string MID   = "04 - Swing - Middle";
-    const std::string MIDU  = "05 - Swing - Mid-Up";
-    const std::string UP    = "06 - Swing - Up";
-    const std::string CDOWN = "07 - Constant - Down";
-    const std::string CMIDD = "08 - Constant - Mid-Down";
-    const std::string CMID  = "09 - Constant - Middle";
-    const std::string CMIDU = "10 - Constant - Mid-Up";
-    const std::string CUP   = "11 - Constant - Up";
 }
 
 /* this must be same as DISPLAY_OPTIONS in climate.py */
