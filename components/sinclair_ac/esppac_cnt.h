@@ -73,33 +73,12 @@ namespace protocol {
   static const uint8_t REPORT_TEMP_ACT_OFF  = 19;
   static const float   REPORT_TEMP_ACT_DIV  = 2.0;
 
-  static const uint8_t REPORT_HSWING_BYTE = 8;
-  static const uint8_t REPORT_HSWING_MASK = 0b00000111;
-  static const uint8_t REPORT_HSWING_POS  = 0;
-  static const uint8_t REPORT_HSWING_OFF  = 0;
-  static const uint8_t REPORT_HSWING_FULL = 1;
-  static const uint8_t REPORT_HSWING_CLEFT  = 2;
-  static const uint8_t REPORT_HSWING_CMIDL  = 3;
-  static const uint8_t REPORT_HSWING_CMID   = 4;
-  static const uint8_t REPORT_HSWING_CMIDR  = 5;
-  static const uint8_t REPORT_HSWING_CRIGHT = 6;
-
   static const uint8_t REPORT_VSWING_BYTE = 8;
   static const uint8_t REPORT_VSWING_MASK = 0b11110000;
   static const uint8_t REPORT_VSWING_POS  = 4;
   static const uint8_t REPORT_VSWING_OFF  = 0;
   static const uint8_t REPORT_VSWING_FULL  = 1;
-  static const uint8_t REPORT_VSWING_CUP   = 2;
-  static const uint8_t REPORT_VSWING_CMIDU = 3;
-  static const uint8_t REPORT_VSWING_CMID  = 4;
-  static const uint8_t REPORT_VSWING_CMIDD = 5;
-  static const uint8_t REPORT_VSWING_CDOWN = 6;
-  static const uint8_t REPORT_VSWING_DOWN  = 7;
-  static const uint8_t REPORT_VSWING_MIDD  = 8;
-  static const uint8_t REPORT_VSWING_MID   = 9;
-  static const uint8_t REPORT_VSWING_MIDU  = 10;
-  static const uint8_t REPORT_VSWING_UP    = 11;
-
+  
   static const uint8_t REPORT_DISP_ON_BYTE = 6;
   static const uint8_t REPORT_DISP_ON_MASK = 0b00000010;
 
