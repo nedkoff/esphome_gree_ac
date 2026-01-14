@@ -622,16 +622,6 @@ std::string SinclairACCNT::determine_vertical_swing() {
   switch (mode) {
     case protocol::REPORT_VSWING_OFF:   return vertical_swing_options::OFF;
     case protocol::REPORT_VSWING_FULL:  return vertical_swing_options::FULL;
-    case protocol::REPORT_VSWING_DOWN:  return vertical_swing_options::DOWN;
-    case protocol::REPORT_VSWING_MIDD:  return vertical_swing_options::MIDD;
-    case protocol::REPORT_VSWING_MID:   return vertical_swing_options::MID;
-    case protocol::REPORT_VSWING_MIDU:  return vertical_swing_options::MIDU;
-    case protocol::REPORT_VSWING_UP:    return vertical_swing_options::UP;
-    case protocol::REPORT_VSWING_CDOWN: return vertical_swing_options::CDOWN;
-    case protocol::REPORT_VSWING_CMIDD: return vertical_swing_options::CMIDD;
-    case protocol::REPORT_VSWING_CMID:  return vertical_swing_options::CMID;
-    case protocol::REPORT_VSWING_CMIDU: return vertical_swing_options::CMIDU;
-    case protocol::REPORT_VSWING_CUP:   return vertical_swing_options::CUP;
     default:
       ESP_LOGW(TAG, "Received unknown vertical swing mode");
       return vertical_swing_options::OFF;
