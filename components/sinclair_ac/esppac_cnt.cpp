@@ -676,17 +676,7 @@ void SinclairACCNT::on_vertical_swing_change(const std::string &swing) {
   uint8_t vs = protocol::REPORT_VSWING_OFF;
   if (swing == vertical_swing_options::OFF) vs = protocol::REPORT_VSWING_OFF;
   else if (swing == vertical_swing_options::FULL) vs = protocol::REPORT_VSWING_FULL;
-  else if (swing == vertical_swing_options::DOWN) vs = protocol::REPORT_VSWING_DOWN;
-  else if (swing == vertical_swing_options::MIDD) vs = protocol::REPORT_VSWING_MIDD;
-  else if (swing == vertical_swing_options::MID) vs = protocol::REPORT_VSWING_MID;
-  else if (swing == vertical_swing_options::MIDU) vs = protocol::REPORT_VSWING_MIDU;
-  else if (swing == vertical_swing_options::UP) vs = protocol::REPORT_VSWING_UP;
-  else if (swing == vertical_swing_options::CDOWN) vs = protocol::REPORT_VSWING_CDOWN;
-  else if (swing == vertical_swing_options::CMIDD) vs = protocol::REPORT_VSWING_CMIDD;
-  else if (swing == vertical_swing_options::CMID) vs = protocol::REPORT_VSWING_CMID;
-  else if (swing == vertical_swing_options::CMIDU) vs = protocol::REPORT_VSWING_CMIDU;
-  else if (swing == vertical_swing_options::CUP) vs = protocol::REPORT_VSWING_CUP;
-
+ 
   this->pend_vswing_ = vs;
   this->arm_pending_(PEND_VSWING);
 }
