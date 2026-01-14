@@ -41,16 +41,6 @@ CONF_CURRENT_TEMPERATURE_SENSOR = "current_temperature_sensor"
 VERTICAL_SWING_OPTIONS = [
     "00 - OFF",
     "01 - Swing - Full",
-    "02 - Swing - Down",
-    "03 - Swing - Mid-Down",
-    "04 - Swing - Middle",
-    "05 - Swing - Mid-Up",
-    "06 - Swing - Up",
-    "07 - Constant - Down",
-    "08 - Constant - Mid-Down",
-    "09 - Constant - Middle",
-    "10 - Constant - Mid-Up",
-    "11 - Constant - Up",
 ]
 
 DISPLAY_OPTIONS = [
@@ -58,7 +48,6 @@ DISPLAY_OPTIONS = [
     "1 - Auto",
     "2 - Set temperature",
     "3 - Actual temperature",
-    "4 - Outside temperature",
 ]
 
 DISPLAY_UNIT_OPTIONS = [
