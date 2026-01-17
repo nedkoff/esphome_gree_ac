@@ -8,14 +8,14 @@ This generally replaces stock WiFi module, sometimes giving a little more advanc
 
 Tested with Gree Viola, every function and mode works correctly.
 
-Communication protocol is based on 
+It is based on https://github.com/piotrva/esphome_gree_ac.git
 
 ESPHome interface/binding based on:
 * https://github.com/DomiStyle/esphome-panasonic-ac
 
 **USAGE**
 * Use at your own risk!
-* See: https://github.com/piotrva/esphome_gree_ac/tree/main/examples
+* See: https://github.com/nedkoff/esphome_gree_ac/tree/main/examples
 * Create configuration file: `ac-sinclair-main.yaml`
 * Configure youe ESP `board`, `uart`, optionally `status_led`, check `wifi` settings (secrets)
 * Create configuration(s) for your device(s): `ac-living-room.yaml`, `ac-bedroom.yaml`
@@ -38,8 +38,11 @@ On some stock WiFi PCBs AC unit connector pins are marked on silkscreen.
 
 ![Connection schematic](./images/schematic.png)
 
-**NOTES**
-* It was reported [#1](https://github.com/piotrva/esphome_gree_ac/issues/1) that with some changes the code works with Lennox li024ci AC
+Changes made in this fork:
+* Removed horizontal swing (this model does't have motorized horizontal flaps )
+* Removed unsupported verical swing modes (it have only "Full" and "Off" )
+* Fixed fan modes (different values and less modes)
+* Fixed actual temperature shown in Home Assistant
+* Fixed the need to resubmit a command
 
-**TODO**
-* Fixing sometimes need to send parameter change twice
+
