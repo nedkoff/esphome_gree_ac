@@ -6,11 +6,9 @@ This generally replaces stock WiFi module, sometimes giving a little more advanc
 
 ** This fork is optimized for Gree GWH12RB-K3DNA3G/I (Viola) **
 
-Work is still in progress!
+Tested with Gree Viola, every function and mode works correctly.
 
-Tested with Gree Viola, every function and mode works correctly, sometimes need to send parameter change twice - work in progress.
-
-Communication protocol is based on my own reverse-engineering.
+Communication protocol is based on 
 
 ESPHome interface/binding based on:
 * https://github.com/DomiStyle/esphome-panasonic-ac
