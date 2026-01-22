@@ -135,8 +135,8 @@ void SinclairAC::update_swing_vertical(const std::string &swing)
     this->vertical_swing_state_ = swing;
 
     if (this->vertical_swing_select_ != nullptr) {
-        const char *current = this->vertical_swing_select_->current_option();
-        if (current == nullptr || this->vertical_swing_state_ != current) {
+        auto current = this->vertical_swing_select_->current_option();  
+        if (current.empty() || this->vertical_swing_state_ != current.c_str()) {
             this->vertical_swing_select_->publish_state(this->vertical_swing_state_);
         }
     }
@@ -148,8 +148,8 @@ void SinclairAC::update_display(const std::string &display)
     this->display_state_ = display;
 
     if (this->display_select_ != nullptr) {
-        const char *current = this->display_select_->current_option();  // може да е nullptr
-        if (current == nullptr || this->display_state_ != current) {
+        auto *current = this->display_select_->current_option();  
+        if (current.empty() || this->display_state_ != current) {
             this->display_select_->publish_state(this->display_state_);
         }
     }
@@ -161,8 +161,8 @@ void SinclairAC::update_display_unit(const std::string &display_unit)
     this->display_unit_state_ = display_unit;
 
     if (this->display_unit_select_ != nullptr) {
-        const char *current = this->display_unit_select_->current_option();  // може да е nullptr
-        if (current == nullptr || this->display_unit_state_ != current) {
+        auto *current = this->display_unit_select_->current_option();  // може да е nullptr
+        if (current.empty() || this->display_unit_state_ != current) {
             this->display_unit_select_->publish_state(this->display_unit_state_);
         }
     }
