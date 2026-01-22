@@ -273,13 +273,16 @@ void SinclairAC::set_display_select(select::Select *display_select)
 void SinclairAC::set_display_unit_select(select::Select *display_unit_select)
 {
     this->display_unit_select_ = display_unit_select;
-    this->on_display_unit_change_->add_on_state_callback([this](size_t index) {
-    auto opt = this->on_display_unit_change_->at(index);
+
+    this->display_unit_select_->add_on_state_callback([this](size_t index) {
+        auto opt = this->display_unit_select_->at(index);
         if (!opt.has_value())
             return;
+
         const auto &value = opt.value();
-        if (value == this->on_display_unit_change_)
+        if (value == this->display_unit_state_)
             return;
+
         this->on_display_unit_change(value);
     });
 }
