@@ -383,7 +383,7 @@ void SinclairACCNT::send_packet() {
   bool fanTurbo = false;
   if (this->has_custom_fan_mode()) {
     auto custom_fan_mode = this->get_custom_fan_mode();
-    if (strcmp(custom_fan_mode, fan_modes::FAN_AUTO) == 0)        { fanSpeed1 = 0; fanSpeed2 = 0; fanTurbo = false; }
+    if (strcmp(custom_fan_mode.c_str(), fan_modes::FAN_AUTO) == 0)        { fanSpeed1 = 0; fanSpeed2 = 0; fanTurbo = false; }
     else if (strcmp(custom_fan_mode.c_str(), fan_modes::FAN_LOW) == 0)    { fanSpeed1 = 1; fanSpeed2 = 1; fanTurbo = false; }
     else if (strcmp(custom_fan_mode.c_str(), fan_modes::FAN_MED) == 0)    { fanSpeed1 = 3; fanSpeed2 = 2; fanTurbo = false; }
     else if (strcmp(custom_fan_mode.c_str(), fan_modes::FAN_HIGH) == 0)   { fanSpeed1 = 5; fanSpeed2 = 3; fanTurbo = false; }
