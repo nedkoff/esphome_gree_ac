@@ -44,5 +44,6 @@ Changes made in this fork:
 * Fixed fan modes (different values and less modes)
 * Fixed actual temperature shown in Home Assistant
 * Fixed the need to resubmit a command
+* Compatible with Esphome 2026.1 and framework: esp-idf
 
 
