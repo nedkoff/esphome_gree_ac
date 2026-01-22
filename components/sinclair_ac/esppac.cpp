@@ -149,7 +149,7 @@ void SinclairAC::update_display(const std::string &display)
 
     if (this->display_select_ != nullptr) {
         auto *current = this->display_select_->current_option();  
-        if (current.empty() || this->display_state_ != current) {
+        if (current.empty() || this->display_state_ != current.c_str()) {
             this->display_select_->publish_state(this->display_state_);
         }
     }
@@ -162,7 +162,7 @@ void SinclairAC::update_display_unit(const std::string &display_unit)
 
     if (this->display_unit_select_ != nullptr) {
         auto *current = this->display_unit_select_->current_option();  // може да е nullptr
-        if (current.empty() || this->display_unit_state_ != current) {
+        if (current.empty() || this->display_unit_state_ != current.c_str) {
             this->display_unit_select_->publish_state(this->display_unit_state_);
         }
     }
