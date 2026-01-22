@@ -255,7 +255,6 @@ void SinclairAC::set_vertical_swing_select(select::Select *vertical_swing_select
     });
 }
 
-
 void SinclairAC::set_display_select(select::Select *display_select)
 {
     this->display_select_ = display_select;
@@ -263,9 +262,11 @@ void SinclairAC::set_display_select(select::Select *display_select)
         auto opt = this->display_select_->at(index);
         if (!opt.has_value())
             return;
+
         const auto &value = opt.value();
-        if (value == this->display_select_)
+        if (value == this->display_state_)
             return;
+
         this->on_display_change(value);
     });
 }
