@@ -29,7 +29,7 @@ time:
   - platform: sntp
 
 external_components:
-  - source: github://piotrva/esphome_gree_ac
+  - source: github://nedkoff/esphome_gree_ac@EspHome_2026.1
     components: [sinclair_ac]
     refresh: 0s
 
