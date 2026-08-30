@@ -70,8 +70,8 @@ namespace protocol {
   static const uint8_t REPORT_TEMP_ACT_BYTE = 42;
   static const uint8_t REPORT_TEMP_ACT_MASK = 0b11111111;
   static const uint8_t REPORT_TEMP_ACT_POS  = 0;
-  static const uint8_t REPORT_TEMP_ACT_OFF  = 19;
-  static const float   REPORT_TEMP_ACT_DIV  = 2.0;
+  static const uint8_t REPORT_TEMP_ACT_OFF  = 40;
+  static const float   REPORT_TEMP_ACT_DIV  = 1.0;
 
   static const uint8_t REPORT_VSWING_BYTE = 8;
   static const uint8_t REPORT_VSWING_MASK = 0b11110000;
